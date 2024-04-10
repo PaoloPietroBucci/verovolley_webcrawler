@@ -1,5 +1,5 @@
 import argparse
-from .Posts import Posts
+from .posts import Posts
 from .exceptions.exceptions import *
 
 def parse_args():
