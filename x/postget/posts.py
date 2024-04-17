@@ -10,6 +10,7 @@ import re
 import os
 import shutil
 import random
+import json
 from selenium.webdriver.chrome.options import Options
 from datetime import datetime
 from .exceptions.exceptions import WrongDateString, NoTweetsReturned, ElementNotLoaded
@@ -53,13 +54,7 @@ class Posts:
             since_time (str): String of the time from which the tweets will be returned. Format: timestamp in SECONDS, UTC time. Temporarily supported only for mode 1
             until_time (str): String of the time until which the tweets will be returned. Format: timestamp in SECONDS, UTC time. Temporarily supported only for mode 1
         """
-        print("[postget]: You or your program started Postget, powered by")
-        print("██╗░░░░░░█████╗░███╗░░██╗██████╗░░█████╗░███╗░░░███╗██╗██╗░░██╗")
-        print("██║░░░░░██╔══██╗████╗░██║██╔══██╗██╔══██╗████╗░████║██║╚██╗██╔╝")
-        print("██║░░░░░███████║██╔██╗██║██║░░██║██║░░██║██╔████╔██║██║░╚███╔╝░")
-        print("██║░░░░░██╔══██║██║╚████║██║░░██║██║░░██║██║╚██╔╝██║██║░██╔██╗░")
-        print("███████╗██║░░██║██║░╚███║██████╔╝╚█████╔╝██║░╚═╝░██║██║██╔╝╚██╗")
-        print("╚══════╝╚═╝░░╚═╝╚═╝░░╚══╝╚═════╝░░╚════╝░╚═╝░░░░░╚═╝╚═╝╚═╝░░╚═╝")
+        print("[postget]: You or your program started Postget")
 
         # Parameters initialization
         self.username = username
@@ -485,19 +480,29 @@ class Posts:
         self.driver.quit()
 
     def print_results(self):
-        """Prints the search according to the mode specified.
+        """Prints and saves the search according to the mode specified.
         """
+        results = {}
         if self.mode == 0:
+            images = self.get_actual_images()
+            videos = self.get_video_preview()
             print('[postget]: Hey hey ... here are the images:')
-            for image in self.get_actual_images():
+            for image in images:
                 print(f'           {image}')
             print('           and here the videos:')
-            for video in self.get_video_preview():
+            for video in videos:
                 print(f'           {video}')
+            results['images'] = images
+            results['videos'] = videos
         else:
+            tweets = {tweet: self.tweets[tweet] for tweet in self.tweets}
             print('[postget]: Hey hey ... here are the tweets:')
             for tweet in self.tweets:
                 print(f'           {self.tweets[tweet]}')
+            results['tweets'] = tweets
+
+        with open('x.json', 'w') as json_file:
+            json.dump(results, json_file, indent=4)
 
     ###### Checks ######
     def check_date(self):
