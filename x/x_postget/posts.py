@@ -54,7 +54,7 @@ class Posts:
             since_time (str): String of the time from which the tweets will be returned. Format: timestamp in SECONDS, UTC time. Temporarily supported only for mode 1
             until_time (str): String of the time until which the tweets will be returned. Format: timestamp in SECONDS, UTC time. Temporarily supported only for mode 1
         """
-        print("[postget]: You or your program started Postget")
+        print("[x_postget]: You or your program started Postget")
 
         # Parameters initialization
         self.username = username
@@ -75,7 +75,7 @@ class Posts:
         try:
             self.check_date()
         except WrongDateString as e:
-            print(f'[postget]: {e}')
+            print(f'[x_postget]: {e}')
             print('           Ignoring since and until parameters since one among them was set wrong')
             self.since = 'none'
             self.until = 'none'
@@ -98,7 +98,7 @@ class Posts:
             # If you try to run chromium as root, an error is shown displayng that reuquires --no-sandbox option to be set
             self.chrome_options.add_argument("--no-sandbox")
             print(
-                '[postget]: Running in root mode. This is not recommended for security reasons, disabling sandbox to allow run chromium.')
+                '[x_postget]: Running in root mode. This is not recommended for security reasons, disabling sandbox to allow run chromium.')
         if chromedriver != 'none':
             self.driver = webdriver.Chrome(chromedriver, chrome_options=self.chrome_options)
         else:
@@ -112,9 +112,9 @@ class Posts:
         """Method used to go back to the homepage.
         """
 
-        print('[postget]: Going to the homepage.')
+        print('[x_postget]: Going to the homepage.')
         self.driver.get('https://twitter.com/home')
-        print('[postget]: Returned to the homepage.')
+        print('[x_postget]: Returned to the homepage.')
 
     def login(self):
         """Method used to perform the login in the twitter account
@@ -126,7 +126,7 @@ class Posts:
             ElementNotLoaded: When the button to click to go to the home page is not loaded within timeout
         """
 
-        print('[postget]: Logging in')
+        print('[x_postget]: Logging in')
         # Input username
         try:
             username_input = self.wait.until(EC.visibility_of_element_located((By.NAME, "text")))
@@ -167,7 +167,7 @@ class Posts:
 
         button.click()
 
-        print('[postget]: Logged in successfully')
+        print('[x_postget]: Logged in successfully')
 
     def search(self):
         """Method used to search. It will take care of performing the search according to the mode and the parameters set
@@ -179,7 +179,7 @@ class Posts:
         """
 
         # Query input
-        print('[postget]: From now on, it may take a while, according to parameters.')
+        print('[x_postget]: From now on, it may take a while, according to parameters.')
         try:
             searchbox = self.wait.until(
                 EC.visibility_of_element_located((By.XPATH, "//input[@aria-label='Search query']")))
@@ -190,12 +190,12 @@ class Posts:
             soup = BeautifulSoup(page_source, 'html.parser')
             if 'Verify your identity by entering the email address' in soup.get_text():
 
-                print('[postget]: twitter is asking to verify the identity by entering the email address')
+                print('[x_postget]: twitter is asking to verify the identity by entering the email address')
                 try:
                     email_confirmation_input = self.wait.until(EC.visibility_of_element_located((By.NAME, "text")))
                 except TimeoutException:
                     raise ElementNotLoaded('Email Confirmation input not loaded')
-                print('[postget]: Email Confirmation input loaded, starting input email.')
+                print('[x_postget]: Email Confirmation input loaded, starting input email.')
                 for character in self.email_address:
                     email_confirmation_input.send_keys(character)
                     time.sleep(0.3)
@@ -237,7 +237,7 @@ class Posts:
             if self.until != 'none':
                 self.input_query += f' until:{self.until}'
 
-        print(f'[postget]: Starting to input \'{self.input_query}\' in the searchbox')
+        print(f'[x_postget]: Starting to input \'{self.input_query}\' in the searchbox')
 
         for character in self.input_query:
             searchbox.send_keys(character)
@@ -246,7 +246,7 @@ class Posts:
         searchbox.send_keys(Keys.ENTER)
 
         pause_time = self.compute_scroll_pause_time()
-        print(f'[postget]: Search performed successfully, waiting first content to load. Waiting {pause_time} seconds')
+        print(f'[x_postget]: Search performed successfully, waiting first content to load. Waiting {pause_time} seconds')
         time.sleep(pause_time)
 
         if self.mode == 0:
@@ -267,14 +267,14 @@ class Posts:
             NoTweetsReturned: raised when no tweets are returned by the search
         """
 
-        print('[postget]: Starting complete search')
+        print('[x_postget]: Starting complete search')
         count = 0
         destination = 0
 
         if self.since_id != -1 and self.max_id != -1:
-            print(f'[postget]: since_id and max_id are set. since_id = {self.since_id}, max_id = {self.max_id}.')
+            print(f'[x_postget]: since_id and max_id are set. since_id = {self.since_id}, max_id = {self.max_id}.')
         else:
-            print(f'[postget]: since_id and max_id are not set. since_id = {self.since_id}, max_id = {self.max_id}.')
+            print(f'[x_postget]: since_id and max_id are not set. since_id = {self.since_id}, max_id = {self.max_id}.')
 
         page_source = self.driver.page_source
         soup = BeautifulSoup(page_source, 'html.parser')
@@ -283,7 +283,7 @@ class Posts:
 
         while True:
             count += 1
-            print(f'[postget]: Performing scroll {count} of {self.num_scrolls}')
+            print(f'[x_postget]: Performing scroll {count} of {self.num_scrolls}')
 
             # Scroll down
             destination = destination + Y
@@ -291,7 +291,7 @@ class Posts:
 
             # Wait for page to load
             pause_time = self.compute_scroll_pause_time()
-            print(f'[postget]: Hey wait ... This content seams interesting, I\'ll wait {pause_time} seconds')
+            print(f'[x_postget]: Hey wait ... This content seams interesting, I\'ll wait {pause_time} seconds')
             time.sleep(pause_time)
 
             # Update page source
@@ -355,7 +355,7 @@ class Posts:
                                             video_tag['poster'])
                         else:
                             print(
-                                f'[postget]: Tweet {username_tweet_id["href"].split("/")[3]} not in the range [{self.since_id}, {self.max_id}]. Skipping it')
+                                f'[x_postget]: Tweet {username_tweet_id["href"].split("/")[3]} not in the range [{self.since_id}, {self.max_id}]. Skipping it')
                     else:
                         # In this case, since_id and max_id are not set, so we can analyze all the tweets
                         # using the discussion id as key of the dictionary, and checking if not already analyzed
@@ -403,11 +403,11 @@ class Posts:
             NoTweetsReturned: raised when no tweets are returned by the search
         """
 
-        print('[postget]: Starting simplified search')
+        print('[x_postget]: Starting simplified search')
 
         if self.since_id != -1 or self.max_id != -1:
             print(
-                '[postget]: Simplified search does not support since_id and max_id parameters, since while browsing doesen\'t retrieve those information. Ignoring them.')
+                '[x_postget]: Simplified search does not support since_id and max_id parameters, since while browsing doesen\'t retrieve those information. Ignoring them.')
 
         count = 0
         destination = 0
@@ -419,7 +419,7 @@ class Posts:
 
         while True:
             count += 1
-            print(f'[postget]: Performing scroll {count} of {self.num_scrolls}')
+            print(f'[x_postget]: Performing scroll {count} of {self.num_scrolls}')
 
             # Scroll down
             destination = destination + Y
@@ -427,7 +427,7 @@ class Posts:
 
             # Wait to load page
             pause_time = self.compute_scroll_pause_time()
-            print(f'[postget]: Hey wait ... This content seams interesting, I\'ll wait {pause_time} seconds')
+            print(f'[x_postget]: Hey wait ... This content seams interesting, I\'ll wait {pause_time} seconds')
             time.sleep(pause_time)
 
             # Update vectors
@@ -486,7 +486,7 @@ class Posts:
         if self.mode == 0:
             images = self.get_actual_images()
             videos = self.get_video_preview()
-            print('[postget]: Hey hey ... here are the images:')
+            print('[x_postget]: Hey hey ... here are the images:')
             for image in images:
                 print(f'           {image}')
             print('           and here the videos:')
@@ -496,12 +496,12 @@ class Posts:
             results['videos'] = videos
         else:
             tweets = {tweet: self.tweets[tweet] for tweet in self.tweets}
-            print('[postget]: Hey hey ... here are the tweets:')
+            print('[x_postget]: Hey hey ... here are the tweets:')
             for tweet in self.tweets:
                 print(f'           {self.tweets[tweet]}')
             results['tweets'] = tweets
 
-        with open('x.json', 'w') as json_file:
+        with open('x_crawled.json', 'w') as json_file:
             json.dump(results, json_file, indent=4)
 
     ###### Checks ######
@@ -719,7 +719,7 @@ class Posts:
         try:
             self.check_date()
         except WrongDateString as e:
-            print(f'[postget]: {e}')
+            print(f'[x_postget]: {e}')
             print('           Ignoring since and until parameters since one among them was set wrong')
             self.since = 'none'
             self.until = 'none'
@@ -744,7 +744,7 @@ class Posts:
         try:
             self.check_date()
         except WrongDateString as e:
-            print(f'[postget]: {e}')
+            print(f'[x_postget]: {e}')
             print('           Ignoring since and until parameters since one among them was set wrong')
             self.since = 'none'
             self.until = 'none'
