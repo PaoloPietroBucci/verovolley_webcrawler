@@ -1,13 +1,5 @@
 https://subzeroid.github.io/instagrapi/usage-guide/fundamentals.html
 
-user_clips(user_id: str, amount: int = 50)
-    - Get list of clips (reels) by user_id
-    - List[Media]
-
-usertag_medias(user_id: str, amount: int = 20)
-    - Get medias where a user is tagged
-    - List[Media]
-
 media_likers(media_id: str)
     - Return list of users who liked this post (due to Instagram limitations, this may not return a complete list)
     - List[UserShort]
