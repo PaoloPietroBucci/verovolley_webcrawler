@@ -3,9 +3,9 @@ import json
 import argparse
 from datetime import datetime
 
-# python3 main.py --username normanoderic --password normanoderic123 --query verovolley
-# python3 main.py --username normanoderic --password normanoderic123 --query verovolley --followers --following
-# python3 main.py --username normanoderic --password normanoderic123 --query verovolley --story --numstory 1
+# python3 main.py --username paolo.guf --password paolo.guf!123 --query verovolley
+# python3 main.py --username insta_crow@yahoo.com --password crowler --query verovolley --followers --following
+# python3 main.py --username paolo.guf --password paolo.guf!123 --query verovolley --story --numstory 1
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -38,6 +38,8 @@ def parse_args():
                         help='Call with this if you also want get a list of stories published by the user')
     parser.add_argument('--numstory', type=int, metavar='', default=1,
                         help='Number of stories published by the user to return')
+    parser.add_argument('--bio', action='store_true',
+                        help='Call with this if you also want get the bio of the user you are searching for')
 
     args = parser.parse_args()
     return args
@@ -112,8 +114,13 @@ def main():
             story_dict = story.dict()
             results["story"].append(story_dict)
 
+    if args.bio:
+        results["bio"] = []
+        user_bio = cl.user_info(user_id)
+        results["bio"].append(user_bio.dict())
+
     json_data = json.dumps(results, indent=4, default=str)
-    with open('ig_crawled.json', 'w') as json_file:
+    with open('ig_crawled_bio.json', 'w') as json_file:
         json_file.write(json_data)
     print("Data has been written to .json")
 
