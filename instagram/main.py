@@ -2,12 +2,8 @@ from instagrapi import Client
 import json
 import argparse
 from datetime import datetime
-import parser
 
-
-# python3 main.py --username normanoderic --password normanoderic123 --query verovolley
-# python3 main.py --username normanoderic --password normanoderic123 --query verovolley --followers --following
-# python3 main.py --username normanoderic --password normanoderic123 --query verovolley --story --numstory 1
+# python3 main.py --username tihadina3 --password 123tihadina3 --query verovolley
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -16,17 +12,18 @@ def parse_args():
     parser.add_argument('--password', type=str, metavar='',
                         help='Password of the Username that will be used access the Twitter account')
     parser.add_argument('--query', type=str, metavar='', help='Query to be searched on Instagram')
+    '''
     parser.add_argument('--until', type=str, metavar='YYYY-MM-DD', default=None,
                         help='String of the date until which the posts will be returned. Format: YYYY-MM-DD, UTC time.')
     parser.add_argument('--since', type=str, metavar='YYYY-MM-DD', default=None,
                         help='String of the date from which the posts will be returned. Format: YYYY-MM-DD, UTC time.')
+    '''
     parser.add_argument('-np', '--numposts', type=int, metavar='', default=3,
                         help='Number of posts to scrape starting from the most recent one')
     parser.add_argument('--comments', type=int, metavar='', default=0,
                         help='Number of comments to scrape from each post')
     parser.add_argument('--reels', action='store_true', help='Call with this if you want get list of only reels')
-    parser.add_argument('--tag', action='store_true',
-                        help='Call with this if you want get list of only the posts the user was tagged in')
+    parser.add_argument('--tag', action='store_true', help='Call with this if you want get list of only the posts the user was tagged in')
     parser.add_argument('--likers', action='store_true',
                         help='Call with this if you also want get list of users who liked the post (due to Instagram limitations, this may not return a complete list)')
     parser.add_argument('--followers', action='store_true',
@@ -41,27 +38,32 @@ def parse_args():
                         help='Call with this if you also want get a list of stories published by the user')
     parser.add_argument('--numstory', type=int, metavar='', default=1,
                         help='Number of stories published by the user to return')
+    parser.add_argument('--bio', action='store_true',
+                        help='Call with this if you also want get the bio of the user you are searching for')
 
     args = parser.parse_args()
     return args
 
 
+'''
 # TODO: filter the media by date
-
 def filter_media_by_date(medias, since=None, until=None):
     if not since and not until:
         return medias
 
     filtered_posts = []
-    for m in medias:
-        'IG date format 2024-04-22 10:03:12+00:00'
-        media_date = parser.parse(m.taken.at)
-        since_date = parser.parse(since)
-        untill_date = parser.parse(until)
-        if media_date >= since_date and media_date <= untill_date:
-            filtered_posts.append(m)
-    return filtered_posts
+    since_date = datetime.strptime(since, '%Y-%m-%d').date() if since else None
+    until_date = datetime.strptime(until, '%Y-%m-%d').date() if until else None
 
+    for media in medias:
+        post_date = media.taken_at.date()  # Extract the date part only for comparison
+        if since_date and post_date <= since_date:
+            continue
+        if until_date and post_date > until_date:
+            continue
+        filtered_posts.append(media)
+    return filtered_posts
+'''
 
 def main():
     args = parse_args()
@@ -77,8 +79,10 @@ def main():
     else:
         medias = cl.user_medias(user_id, args.numposts)
 
+    '''
     # Filter medias by date, if specified
     medias = filter_media_by_date(medias, args.since, args.until)
+    '''
 
     # Save to a json file
     results = {}
@@ -115,7 +119,12 @@ def main():
             story_dict = story.dict()
             results["story"].append(story_dict)
 
-    json_data = json.dumps(results, indent=4, default=str)
+    if args.bio:
+        results["bio"] = []
+        user_bio = cl.user_info(user_id)
+        results["bio"].append(user_bio.dict())
+
+    json_data = json.dumps(results, indent=4, default=str, ensure_ascii=False)
     with open('ig_crawled.json', 'w') as json_file:
         json_file.write(json_data)
     print("Data has been written to .json")
