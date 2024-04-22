@@ -2,6 +2,8 @@ from instagrapi import Client
 import json
 import argparse
 from datetime import datetime
+import parser
+
 
 # python3 main.py --username normanoderic --password normanoderic123 --query verovolley
 # python3 main.py --username normanoderic --password normanoderic123 --query verovolley --followers --following
@@ -23,7 +25,8 @@ def parse_args():
     parser.add_argument('--comments', type=int, metavar='', default=0,
                         help='Number of comments to scrape from each post')
     parser.add_argument('--reels', action='store_true', help='Call with this if you want get list of only reels')
-    parser.add_argument('--tag', action='store_true', help='Call with this if you want get list of only the posts the user was tagged in')
+    parser.add_argument('--tag', action='store_true',
+                        help='Call with this if you want get list of only the posts the user was tagged in')
     parser.add_argument('--likers', action='store_true',
                         help='Call with this if you also want get list of users who liked the post (due to Instagram limitations, this may not return a complete list)')
     parser.add_argument('--followers', action='store_true',
@@ -44,21 +47,21 @@ def parse_args():
 
 
 # TODO: filter the media by date
-'''
+
 def filter_media_by_date(medias, since=None, until=None):
     if not since and not until:
         return medias
 
     filtered_posts = []
     for m in medias:
-        post_date = m.taken_at.date()
-        if since and post_date < datetime.strptime(since, '%Y-%m-%d').date():
-            continue
-        if until and post_date > datetime.strptime(until, '%Y-%m-%d').date():
-            continue
-        filtered_posts.append(m)
+        'IG date format 2024-04-22 10:03:12+00:00'
+        media_date = parser.parse(m.taken.at)
+        since_date = parser.parse(since)
+        untill_date = parser.parse(until)
+        if media_date >= since_date and media_date <= untill_date:
+            filtered_posts.append(m)
     return filtered_posts
-'''
+
 
 def main():
     args = parse_args()
@@ -75,7 +78,7 @@ def main():
         medias = cl.user_medias(user_id, args.numposts)
 
     # Filter medias by date, if specified
-    # medias = filter_media_by_date(medias, args.since, args.until)
+    medias = filter_media_by_date(medias, args.since, args.until)
 
     # Save to a json file
     results = {}
