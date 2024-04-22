@@ -1,130 +1,79 @@
-from instagrapi import Client
-import json
 import argparse
-from datetime import datetime
+from ig_postget.posts import InstaPosts
 
-# python3 main.py --username paolo.guf --password paolo.guf!123 --query verovolley
-# python3 main.py --username insta_crow@yahoo.com --password crowler --query verovolley --followers --following
-# python3 main.py --username paolo.guf --password paolo.guf!123 --query verovolley --story --numstory 1
+# python3 main.py --username tihadina3 --password 123tihadina3 --query verovolley
+
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--username', type=str, metavar='',
-                        help='Username that will be used to access the Twitter account')
-    parser.add_argument('--password', type=str, metavar='',
-                        help='Password of the Username that will be used access the Twitter account')
-    parser.add_argument('--query', type=str, metavar='', help='Query to be searched on Instagram')
+    parser.add_argument('-u', '--username', type=str, metavar='',
+                        help='Username that will be used to access the Instagram account')
+    parser.add_argument('-p', '--password', type=str, metavar='',
+                        help='Password of the Username that will be used access the Instagram account')
+    parser.add_argument('-q', '--query', type=str, metavar='',
+                        help='Query to be searched on Instagram')
+    parser.add_argument('-r', '--reels', action='store_true',
+                        help='Call with this if you want get list of only reels')
+    parser.add_argument('-t', '--tag', action='store_true',
+                        help='Call with this if you want get list of only the posts the user was tagged in')
+    parser.add_argument('-h', '--hashtag', type=str, metavar='',
+                        help='Hashtag to be searched on Instagram. With a list of related hashtags')
+    parser.add_argument('-rh', '--recent_hash', type=int, metavar='', default=10,
+                        help='Return the selected amount of most recent posts by hashtag')
+    parser.add_argument('-th', '--top_hash', type=int, metavar='', default=10,
+                        help='Return the selected amount of top posts by hashtag')
     parser.add_argument('--until', type=str, metavar='YYYY-MM-DD', default=None,
                         help='String of the date until which the posts will be returned. Format: YYYY-MM-DD, UTC time.')
     parser.add_argument('--since', type=str, metavar='YYYY-MM-DD', default=None,
                         help='String of the date from which the posts will be returned. Format: YYYY-MM-DD, UTC time.')
-    parser.add_argument('-np', '--numposts', type=int, metavar='', default=3,
+    parser.add_argument('-np', '--num_posts', type=int, metavar='', default=3,
                         help='Number of posts to scrape starting from the most recent one')
-    parser.add_argument('--comments', type=int, metavar='', default=0,
-                        help='Number of comments to scrape from each post')
-    parser.add_argument('--reels', action='store_true', help='Call with this if you want get list of only reels')
-    parser.add_argument('--tag', action='store_true', help='Call with this if you want get list of only the posts the user was tagged in')
+    parser.add_argument('-c', '--comments', type=int, metavar='', default=0,
+                        help='Number of comments to scrape from each post. 0 means all the comments')
     parser.add_argument('--likers', action='store_true',
                         help='Call with this if you also want get list of users who liked the post (due to Instagram limitations, this may not return a complete list)')
-    parser.add_argument('--followers', action='store_true',
-                        help='Call with this if you also want get a list of users who followers the user')
-    parser.add_argument('--numfollowers', type=int, metavar='', default=10,
-                        help='Number of followers you want to return')
-    parser.add_argument('--following', action='store_true',
-                        help='Call with this if you also want get a list of users who the user follows')
-    parser.add_argument('--numfollowing', type=int, metavar='', default=10,
-                        help='Number of following you want to return')
-    parser.add_argument('--story', action='store_true',
-                        help='Call with this if you also want get a list of stories published by the user')
-    parser.add_argument('--numstory', type=int, metavar='', default=1,
-                        help='Number of stories published by the user to return')
     parser.add_argument('--bio', action='store_true',
                         help='Call with this if you also want get the bio of the user you are searching for')
+    parser.add_argument('--followers', type=int, metavar='', default=10,
+                        help='Call with this if you also want get a list of the amount of users who followers the user')
+    parser.add_argument('--following', type=int, metavar='', default=10,
+                        help='Call with this if you also want get a list of the amount of users who the user follows')
+    parser.add_argument('--story', type=int, metavar='', default=1,
+                        help='Call with this if you also want get a list of the amount of stories published by the user')
+    try:
+        args = parser.parse_args()
+        return args
+    except argparse.ArgumentError:
+        parser.print_help()
+    exit()
 
-    args = parser.parse_args()
-    return args
-
-
-# TODO: filter the media by date
-'''
-def filter_media_by_date(medias, since=None, until=None):
-    if not since and not until:
-        return medias
-
-    filtered_posts = []
-    for m in medias:
-        post_date = m.taken_at.date()
-        if since and post_date < datetime.strptime(since, '%Y-%m-%d').date():
-            continue
-        if until and post_date > datetime.strptime(until, '%Y-%m-%d').date():
-            continue
-        filtered_posts.append(m)
-    return filtered_posts
-'''
 
 def main():
     args = parse_args()
-    cl = Client()
-    cl.login(args.username, args.password)
 
-    user_id = cl.user_id_from_username(args.query)
-    # Select media type (all or only reels)
-    if args.reels:
-        medias = cl.user_clips(user_id, args.numposts)
-    elif args.tag:
-        medias = cl.usertag_medias(user_id, args.numposts)
-    else:
-        medias = cl.user_medias(user_id, args.numposts)
+    ig_getter = InstaPosts(args.username, args.password, args.query, args.reels, args.tag, args.hashtag, args.recent_hash,
+                           args.top_hash, args.until, args.since, args.num_posts, args.comments, args.likers, args.bio,
+                           args.followers, args.following, args.story)
 
-    # Filter medias by date, if specified
-    # medias = filter_media_by_date(medias, args.since, args.until)
+    print("Retrieving posts from Instagram")
+    ig_getter.get_media(args.num_posts)
+    ig_getter.get_hashtag()
 
-    # Save to a json file
-    results = {}
-    results["media"] = []
-    # Loop through each media to fetch comments
-    results["comments"] = {}
-    for media in medias:
-        media_dict = media.dict()
-        comments = cl.media_comments(media.id, args.comments)
-        comments_data = [comment.dict() for comment in comments]
-        media_dict["comments"] = comments_data
-        # Inside the media_id save the list of likers
-        if args.likers:
-            likers = cl.media_likers(media.id)
-            likers_data = [user.dict() for user in likers]
-            media_dict["likers"] = likers_data
-        results["media"].append(media_dict)
+    ig_getter.check_date()
+    ig_getter.timeframe()
 
-    if args.followers:
-        if args.numfollowers:
-            results["followers"] = cl.user_followers(user_id, True, args.numfollowers)
-        else:
-            results["followers"] = cl.user_followers(user_id, True, 0)
-    if args.following:
-        if args.numfollowing:
-            results["following"] = cl.user_following(user_id, True, args.numfollowing)
-        else:
-            results["following"] = cl.user_following(user_id, True, 0)
+    ig_getter.fetch_post_data()
 
-    if args.story:
-        results["story"] = []
-        stories = cl.user_stories(user_id, args.numstory)
-        for story in stories:
-            story_dict = story.dict()
-            results["story"].append(story_dict)
+    ig_getter.get_bio()
+    ig_getter.get_followers()
+    ig_getter.get_following()
+    ig_getter.get_story()
 
-    if args.bio:
-        results["bio"] = []
-        user_bio = cl.user_info(user_id)
-        results["bio"].append(user_bio.dict())
+    ig_getter.save()
 
-    json_data = json.dumps(results, indent=4, default=str)
-    with open('ig_crawled_bio.json', 'w') as json_file:
-        json_file.write(json_data)
-    print("Data has been written to .json")
-
-    cl.logout()
+    print("Clearing Media")
+    ig_getter.clear_media()
+    ig_getter.logout()
 
 
 if __name__ == '__main__':
