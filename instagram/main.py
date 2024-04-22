@@ -3,7 +3,9 @@ import json
 import argparse
 from datetime import datetime
 
-# python3 main.py --username laconraffael --password qwerty123lacon --query verovolley
+# python3 main.py --username normanoderic --password normanoderic123 --query verovolley
+# python3 main.py --username normanoderic --password normanoderic123 --query verovolley --followers --following
+# python3 main.py --username normanoderic --password normanoderic123 --query verovolley --story --numstory 1
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -22,6 +24,20 @@ def parse_args():
                         help='Number of comments to scrape from each post')
     parser.add_argument('--reels', action='store_true', help='Call with this if you want get list of only reels')
     parser.add_argument('--tag', action='store_true', help='Call with this if you want get list of only the posts the user was tagged in')
+    parser.add_argument('--likers', action='store_true',
+                        help='Call with this if you also want get list of users who liked the post (due to Instagram limitations, this may not return a complete list)')
+    parser.add_argument('--followers', action='store_true',
+                        help='Call with this if you also want get a list of users who followers the user')
+    parser.add_argument('--numfollowers', type=int, metavar='', default=10,
+                        help='Number of followers you want to return')
+    parser.add_argument('--following', action='store_true',
+                        help='Call with this if you also want get a list of users who the user follows')
+    parser.add_argument('--numfollowing', type=int, metavar='', default=10,
+                        help='Number of following you want to return')
+    parser.add_argument('--story', action='store_true',
+                        help='Call with this if you also want get a list of stories published by the user')
+    parser.add_argument('--numstory', type=int, metavar='', default=1,
+                        help='Number of stories published by the user to return')
 
     args = parser.parse_args()
     return args
@@ -71,7 +87,30 @@ def main():
         comments = cl.media_comments(media.id, args.comments)
         comments_data = [comment.dict() for comment in comments]
         media_dict["comments"] = comments_data
+        # Inside the media_id save the list of likers
+        if args.likers:
+            likers = cl.media_likers(media.id)
+            likers_data = [user.dict() for user in likers]
+            media_dict["likers"] = likers_data
         results["media"].append(media_dict)
+
+    if args.followers:
+        if args.numfollowers:
+            results["followers"] = cl.user_followers(user_id, True, args.numfollowers)
+        else:
+            results["followers"] = cl.user_followers(user_id, True, 0)
+    if args.following:
+        if args.numfollowing:
+            results["following"] = cl.user_following(user_id, True, args.numfollowing)
+        else:
+            results["following"] = cl.user_following(user_id, True, 0)
+
+    if args.story:
+        results["story"] = []
+        stories = cl.user_stories(user_id, args.numstory)
+        for story in stories:
+            story_dict = story.dict()
+            results["story"].append(story_dict)
 
     json_data = json.dumps(results, indent=4, default=str)
     with open('ig_crawled.json', 'w') as json_file:
