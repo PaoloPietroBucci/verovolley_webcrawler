@@ -15,3 +15,7 @@ class WebCrawlerItem(scrapy.Item):
     comment_count = scrapy.Field()
     comments = scrapy.Field()
     pass
+
+class BlogPostItem(scrapy.Item):
+    title = scrapy.Field()
+    content = scrapy.Field()
