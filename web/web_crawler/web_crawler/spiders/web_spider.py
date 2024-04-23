@@ -1,28 +1,26 @@
-from scrapy import Spider
-from scrapy.selector import Selector
+from scrapy import Spider, Request
 
-from web_crawler.items import WebCrawlerItem
+from ..items  import BlogPostItem
 
 
-class WebCrawlerSpider(Spider):
-    name = "web_crawler"
-
-    # TODO: Add domains of different websites
-    allowed_domains = ["https://www.volleynews.it/"]
-    start_urls = [
-        "https://www.volleynews.it/category/serie-a/a1femminile/",
-    ]
+class OASportSpider(Spider):
+    name = 'oasport'
+    allowed_domains = ['oasport.it']
+    start_urls = ['https://www.oasport.it/category/squadre/pallavolo/']
 
     def parse(self, response):
-        # Logic of how to extract the HTML
-
-            # TODO: Recursively crawl the extracted url's
-            news_list = Selector(response).xpath('//*[@class="elementor-widget-container"]/h2/a')
-
-            for news_item in news_list:
-                item = WebCrawlerItem()
-                # For now just store the tile of the post and its url
-                item['title'] = news_item.xpath('text()').extract()[0]
-                item['url'] = news_item.xpath('@href').extract()
-                # TODO: Export it in JSON
-                yield item
+        pages_article = response.xpath('//li[contains(@class, "mvp-blog-story-wrap")]/a/@href').getall()
+        for article in pages_article:
+            link = response.urljoin(article)
+            yield Request(url=link, callback=self.parse_article)
+        next_page = response.xpath('//div[contains(@class, "pagination")]/a/@href').getall()
+        yield Request(url=next_page[-2], callback=self.parse)
+    def parse_article(self, response):
+        post = BlogPostItem()
+        article_paragrafs = response.xpath('//div[@id="mvp-content-main"]/p//text()').getall()
+        unique_text = ' '.join(article_paragrafs)
+        article_title = response.xpath('//h1/text()').get()
+        post['title'] = article_title
+        post['text'] = unique_text
+        yield post
+#  scrapy crawl oasport -o output.json

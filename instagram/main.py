@@ -1,9 +1,8 @@
+from dateutil.parser import parser
 from instagrapi import Client
 import json
 import argparse
 from datetime import datetime
-import parser
-
 
 # python3 main.py --username normanoderic --password normanoderic123 --query verovolley
 # python3 main.py --username normanoderic --password normanoderic123 --query verovolley --followers --following
