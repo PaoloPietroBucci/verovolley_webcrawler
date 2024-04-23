@@ -9,9 +9,8 @@ from selenium.webdriver.common.by import By
 from bs4 import BeautifulSoup
 
 
-# python3 main.py --username normanoderic --password normanoderic123 --query verovolley
-# python3 main.py --username normanoderic --password normanoderic123 --query verovolley --followers --following
-# python3 main.py --username normanoderic --password normanoderic123 --query verovolley --story --numstory 1
+# python3 main.py --username *** --password *** --query https://www.linkedin.com/in/justinwelsh/
+# python3 main.py --username *** --password *** --query https://www.linkedin.com/in/justinwelsh/ --numposts 20
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -19,53 +18,35 @@ def parse_args():
                         help='Username that will be used to access the Twitter account')
     parser.add_argument('--password', type=str, metavar='',
                         help='Password of the Username that will be used access the Twitter account')
-    parser.add_argument('--query', type=str, metavar='', help='Query to be searched on Instagram')
-    parser.add_argument('--until', type=str, metavar='YYYY-MM-DD', default=None,
-                        help='String of the date until which the posts will be returned. Format: YYYY-MM-DD, UTC time.')
-    parser.add_argument('--since', type=str, metavar='YYYY-MM-DD', default=None,
-                        help='String of the date from which the posts will be returned. Format: YYYY-MM-DD, UTC time.')
+    # parser.add_argument('--query', type=str, metavar='', help='Query to be searched on Instagram')
+    # parser.add_argument('--until', type=str, metavar='YYYY-MM-DD', default=None,
+    #                     help='String of the date until which the posts will be returned. Format: YYYY-MM-DD, UTC time.')
+    # parser.add_argument('--since', type=str, metavar='YYYY-MM-DD', default=None,
+    #                     help='String of the date from which the posts will be returned. Format: YYYY-MM-DD, UTC time.')
     parser.add_argument('-np', '--numposts', type=int, metavar='', default=3,
                         help='Number of posts to scrape starting from the most recent one')
-    parser.add_argument('--comments', type=int, metavar='', default=0,
-                        help='Number of comments to scrape from each post')
-    parser.add_argument('--reels', action='store_true', help='Call with this if you want get list of only reels')
-    parser.add_argument('--tag', action='store_true',
-                        help='Call with this if you want get list of only the posts the user was tagged in')
-    parser.add_argument('--likers', action='store_true',
-                        help='Call with this if you also want get list of users who liked the post (due to Instagram limitations, this may not return a complete list)')
-    parser.add_argument('--followers', action='store_true',
-                        help='Call with this if you also want get a list of users who followers the user')
-    parser.add_argument('--numfollowers', type=int, metavar='', default=10,
-                        help='Number of followers you want to return')
-    parser.add_argument('--following', action='store_true',
-                        help='Call with this if you also want get a list of users who the user follows')
-    parser.add_argument('--numfollowing', type=int, metavar='', default=10,
-                        help='Number of following you want to return')
-    parser.add_argument('--story', action='store_true',
-                        help='Call with this if you also want get a list of stories published by the user')
-    parser.add_argument('--numstory', type=int, metavar='', default=1,
-                        help='Number of stories published by the user to return')
+    # parser.add_argument('--comments', type=int, metavar='', default=0,
+    #                     help='Number of comments to scrape from each post')
+    # parser.add_argument('--reels', action='store_true', help='Call with this if you want get list of only reels')
+    # parser.add_argument('--tag', action='store_true',
+    #                     help='Call with this if you want get list of only the posts the user was tagged in')
+    # parser.add_argument('--likers', action='store_true',
+    #                     help='Call with this if you also want get list of users who liked the post (due to Instagram limitations, this may not return a complete list)')
+    # parser.add_argument('--followers', action='store_true',
+    #                     help='Call with this if you also want get a list of users who followers the user')
+    # parser.add_argument('--numfollowers', type=int, metavar='', default=10,
+    #                     help='Number of followers you want to return')
+    # parser.add_argument('--following', action='store_true',
+    #                     help='Call with this if you also want get a list of users who the user follows')
+    # parser.add_argument('--numfollowing', type=int, metavar='', default=10,
+    #                     help='Number of following you want to return')
+    # parser.add_argument('--story', action='store_true',
+    #                     help='Call with this if you also want get a list of stories published by the user')
+    # parser.add_argument('--numstory', type=int, metavar='', default=1,
+    #                     help='Number of stories published by the user to return')
 
     args = parser.parse_args()
     return args
-
-
-# TODO: filter the media by date
-'''
-def filter_media_by_date(medias, since=None, until=None):
-    if not since and not until:
-        return medias
-
-    filtered_posts = []
-    for m in medias:
-        post_date = m.taken_at.date()
-        if since and post_date < datetime.strptime(since, '%Y-%m-%d').date():
-            continue
-        if until and post_date > datetime.strptime(until, '%Y-%m-%d').date():
-            continue
-        filtered_posts.append(m)
-    return filtered_posts
-'''
 
 
 def main():
