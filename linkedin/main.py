@@ -18,7 +18,7 @@ def parse_args():
                         help='Username that will be used to access the Twitter account')
     parser.add_argument('--password', type=str, metavar='',
                         help='Password of the Username that will be used access the Twitter account')
-    # parser.add_argument('--query', type=str, metavar='', help='Query to be searched on Instagram')
+    parser.add_argument('--query', type=str, metavar='', help='Query to be searched on Instagram')
     # parser.add_argument('--until', type=str, metavar='YYYY-MM-DD', default=None,
     #                     help='String of the date until which the posts will be returned. Format: YYYY-MM-DD, UTC time.')
     # parser.add_argument('--since', type=str, metavar='YYYY-MM-DD', default=None,
@@ -73,6 +73,17 @@ def main():
 
 
 def login(args, browser):
+    # get the cookies from the last session
+    browser.get('https://www.linkedin.com')
+    try:
+        with open('last_cookies.json', 'r') as json_file:
+            cookies = json.load(json_file)
+            for cookie in cookies:
+                browser.add_cookie(cookie)
+            return True
+    except FileNotFoundError:
+        pass
+
     browser.get('https://www.linkedin.com/login')
     sleep(2)
 
@@ -92,6 +103,10 @@ def login(args, browser):
         if remaining_time == 0:
             return False
     sleep(2)
+    cookies = browser.get_cookies()
+    data = json.dumps(cookies, ensure_ascii=False, indent=4).encode('utf-8')
+    with open('last_cookies.json', 'w') as json_file:
+        json_file.write(data)
     return True
 
 
@@ -121,7 +136,7 @@ def login(args, browser):
 #     return soup
 
 
-def get_profile(profile_url: str, browser: WebDriver) -> str:
+def get_profile(profile_url: str, browser: WebDriver) -> bytes:
     browser.get(profile_url)
     sleep(2)
 
@@ -133,10 +148,10 @@ def get_profile(profile_url: str, browser: WebDriver) -> str:
     location = soup.find('span', class_='text-body-small inline t-black--light break-words').text.strip()
     about_section = soup.find('section', class_='artdeco-card pv-profile-card break-words mt2')
     about = about_section.find('div', class_='display-flex ph5 pv3').div.div.div.span.text.strip()
-    return json.dumps({'name': name, 'header': header, 'location': location, 'about': about}, indent=4)
+    return json.dumps({'name': name, 'header': header, 'location': location, 'about': about}, ensure_ascii=False, indent=4).encode('utf-8')
 
 
-def get_profile_posts(profile_url: str, browser: WebDriver, num_posts: int) -> str:
+def get_profile_posts(profile_url: str, browser: WebDriver, num_posts: int) -> bytes:
     browser.get(profile_url + 'recent-activity/all/')
     sleep(2)
 
@@ -188,17 +203,17 @@ def get_profile_posts(profile_url: str, browser: WebDriver, num_posts: int) -> s
                 json_posts[-1]['comments'].append({'author': comment_author, 'comment': comment_text})
         except AttributeError:
             pass
-    return json.dumps(json_posts, indent=4)
+    return json.dumps(json_posts, ensure_ascii=False, indent=4).encode('utf-8')
 
 
-def combine_data(profile_data, posts_data):
+def combine_data(profile_data, posts_data) -> bytes:
     profile_data['posts'] = posts_data
-    return json.dumps(profile_data, indent=4)
+    return json.dumps(profile_data, ensure_ascii=False, indent=4).encode('utf-8')
 
 
 def save_to_json(data):
     with open('linkedin_crawled_example.json', 'w') as json_file:
-        json_file.write(data)
+        json_file.write(data.decode('utf-8'))
     print("Data has been written to .json")
 
 
