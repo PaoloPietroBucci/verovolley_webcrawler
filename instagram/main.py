@@ -1,7 +1,8 @@
 import argparse
+import sys
 from ig_postget.posts import InstaPosts
 
-# python3 main.py --username tihadina3 --password 123tihadina3 --query verovolley
+# python3 main.py --username pinigah706 --password 123pinigah706 --query verovolley
 
 
 def parse_args():
@@ -11,21 +12,17 @@ def parse_args():
     parser.add_argument('-p', '--password', type=str, metavar='',
                         help='Password of the Username that will be used access the Instagram account')
     parser.add_argument('-q', '--query', type=str, metavar='',
-                        help='Query to be searched on Instagram')
+                        help='Profile to be searched on Instagram')
     parser.add_argument('-r', '--reels', action='store_true',
-                        help='Call with this if you want get list of only reels')
+                        help='Call with this if you want get list of reels as the only media')
     parser.add_argument('-t', '--tag', action='store_true',
                         help='Call with this if you want get list of only the posts the user was tagged in')
-    parser.add_argument('-h', '--hashtag', type=str, metavar='',
-                        help='Hashtag to be searched on Instagram. With a list of related hashtags')
-    parser.add_argument('-rh', '--recent_hash', type=int, metavar='', default=10,
+    parser.add_argument('-hash', '--hashtag', type=str, metavar='',
+                        help='Hashtag to be searched on Instagram. With a list of related posts under the hashtag')
+    parser.add_argument('-rh', '--recent_hash', type=int, metavar='', default=-1,
                         help='Return the selected amount of most recent posts by hashtag')
-    parser.add_argument('-th', '--top_hash', type=int, metavar='', default=10,
+    parser.add_argument('-th', '--top_hash', type=int, metavar='', default=-1,
                         help='Return the selected amount of top posts by hashtag')
-    parser.add_argument('--until', type=str, metavar='YYYY-MM-DD', default=None,
-                        help='String of the date until which the posts will be returned. Format: YYYY-MM-DD, UTC time.')
-    parser.add_argument('--since', type=str, metavar='YYYY-MM-DD', default=None,
-                        help='String of the date from which the posts will be returned. Format: YYYY-MM-DD, UTC time.')
     parser.add_argument('-np', '--num_posts', type=int, metavar='', default=3,
                         help='Number of posts to scrape starting from the most recent one')
     parser.add_argument('-c', '--comments', type=int, metavar='', default=0,
@@ -34,11 +31,11 @@ def parse_args():
                         help='Call with this if you also want get list of users who liked the post (due to Instagram limitations, this may not return a complete list)')
     parser.add_argument('--bio', action='store_true',
                         help='Call with this if you also want get the bio of the user you are searching for')
-    parser.add_argument('--followers', type=int, metavar='', default=10,
+    parser.add_argument('--followers', type=int, metavar='', default=-1,
                         help='Call with this if you also want get a list of the amount of users who followers the user')
-    parser.add_argument('--following', type=int, metavar='', default=10,
+    parser.add_argument('--following', type=int, metavar='', default=-1,
                         help='Call with this if you also want get a list of the amount of users who the user follows')
-    parser.add_argument('--story', type=int, metavar='', default=1,
+    parser.add_argument('--story', type=int, metavar='', default=-1,
                         help='Call with this if you also want get a list of the amount of stories published by the user')
     try:
         args = parser.parse_args()
@@ -51,27 +48,56 @@ def parse_args():
 def main():
     args = parse_args()
 
-    ig_getter = InstaPosts(args.username, args.password, args.query, args.reels, args.tag, args.hashtag, args.recent_hash,
-                           args.top_hash, args.until, args.since, args.num_posts, args.comments, args.likers, args.bio,
-                           args.followers, args.following, args.story)
+    # You can either search for all media, only reels or only tagged posts
+    if args.reels and args.tag:
+        print("Error: Please specify either --reels or --tag, but not both.")
+        sys.exit(1)
 
-    print("Retrieving posts from Instagram")
-    ig_getter.get_media(args.num_posts)
-    ig_getter.get_hashtag()
+    # You can either search for a profile or a hashtag, not both
+    if args.query and args.hashtag:
+        print("Error: Please specify either --query or --hashtag, but not both.")
+        sys.exit(1)
+    elif not args.query and not args.hashtag:
+        print("Error: Please specify either --query or --hashtag.")
+        sys.exit(1)
 
-    ig_getter.check_date()
-    ig_getter.timeframe()
+    # No option to search tagged posts of a hashtag exists
+    if args.hashtag and args.tag:
+        print("Error: No --tag option exists for --hashtag.")
+        sys.exit(1)
 
+    # You can either search for the most recent or the top posts of a hashtag, not both
+    if args.hashtag and args.recent_hash != -1 and args.top_hash != -1:
+        print("Error: Please specify either --recent_hash or --top_hash, but not both.")
+        sys.exit(1)
+
+    ig_getter = InstaPosts(args.username, args.password, args.query, args.hashtag, args.reels, args.tag, args.recent_hash,
+                           args.top_hash, args.num_posts, args.comments, args.likers, args.bio, args.followers,
+                           args.following, args.story)
+
+    ig_getter.login_user()
+
+    if args.query:
+        print("... Retrieving media from query")
+        ig_getter.get_media(args.num_posts)
+    elif args.hashtag:
+        print("... Retrieving media from hashtag")
+        ig_getter.get_hashtag()
+
+    # ig_getter.timeframe()
     ig_getter.fetch_post_data()
 
-    ig_getter.get_bio()
-    ig_getter.get_followers()
-    ig_getter.get_following()
-    ig_getter.get_story()
+    if args.bio:
+        ig_getter.get_bio()
+    if args.followers:
+        ig_getter.get_followers()
+    if args.following:
+        ig_getter.get_following()
+    if args.story:
+        ig_getter.get_story()
 
     ig_getter.save()
-
-    print("Clearing Media")
+    print("... Clearing Media")
     ig_getter.clear_media()
     ig_getter.logout()
 

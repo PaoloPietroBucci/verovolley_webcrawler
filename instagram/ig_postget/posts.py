@@ -2,18 +2,15 @@ from instagrapi import Client
 from instagrapi.exceptions import LoginRequired
 import logging
 import json
-from datetime import datetime, timezone
-from cachetools import TTLCache
-from .exceptions.exceptions import WrongDateString
+import os
 
 logger = logging.getLogger()
 
-class InstaPosts:
-    cache = TTLCache(maxsize=10000, ttl=3600)
 
-    def __init__(self, username: str, password: str, query: str, reels: bool = False, tag: bool = False, hashtag: str = 'none',
-                 recent_hash: int = -1, top_hash: int = -1, until: str = 'none', since: str = 'none', num_posts: int = 10,
-                 comments: int = 0, likers: bool = False, bio: bool = False, followers: int = -1, following: int = -1, story: int = -1):
+class InstaPosts:
+    def __init__(self, username: str, password: str, query: str, hashtag: str, reels: bool = False, tag: bool = False,
+                 recent_hash: int = -1, top_hash: int = -1, num_posts: int = 3, comments: int = 0, likers: bool = False,
+                 bio: bool = False, followers: int = -1, following: int = -1, story: int = -1):
 
         print("[ig_postget]: You or your program started InstaPostget")
         # Parameters initialization
@@ -25,8 +22,6 @@ class InstaPosts:
         self.hashtag = hashtag
         self.recent_hash = recent_hash
         self.top_hash = top_hash
-        self.until = until
-        self.since = since
         self.num_posts = num_posts
         self.comments = comments
         self.likers = likers
@@ -35,142 +30,92 @@ class InstaPosts:
         self.following = following
         self.story = story
 
-        # Check if date format is correct if inserted any
-        try:
-            self.check_date()
-        except WrongDateString as e:
-            print(f'[ig_postget]: {e}')
-            print('           Ignoring since and until parameters since one among them was set wrong')
-            self.since = 'none'
-            self.until = 'none'
-            print(
-                f'           Setting them back to default values to ignore them: since = {self.since}, until = {self.until}')
-
         # Initialization of dictionary
         self.results = {}
-        self.medias = {}
-        self.hashtags = []
+        self.medias = []
+        self.hashtag_info = None
 
         # Initialization of instagrapi
         print("[ig_postget]: Initializing client")
+        self.cl = Client()
         self.login_user()
         self.cl.delay_range = [1, 3]
-        self.user_id = self.cl.user_id_from_username(self.query)
+        self.user_id = None
 
     def login_user(self):
         """
         Attempts to login to Instagram using either the provided session information
         or the provided username and password.
         """
+        path = "ig_postget/session.json"
+        if os.path.exists(path):
+            session = self.cl.load_settings(path)
 
-        self.cl = Client()
-        session = self.cl.load_settings("session.json")
+            login_via_session = False
+            login_via_pw = False
 
-        login_via_session = False
-        login_via_pw = False
-
-        if session:
-            try:
-                self.cl.set_settings(session)
-                self.cl.login(self.username, self.password)
-
-                # check if session is valid
+            if session:
                 try:
-                    self.cl.get_timeline_feed()
-                except LoginRequired:
-                    logger.info("[ig_postget]: Session is invalid, need to login via username and password")
-
-                    old_session = self.cl.get_settings()
-
-                    # use the same device uuids across logins
-                    self.cl.set_settings({})
-                    self.cl.set_uuids(old_session["uuids"])
-
+                    self.cl.set_settings(session)
                     self.cl.login(self.username, self.password)
-                login_via_session = True
-            except Exception as e:
-                logger.info("[ig_postget]: Couldn't login user using session information: %s" % e)
 
-        if not login_via_session:
-            try:
-                logger.info("[ig_postget]: Attempting to login via username and password. username: %s" % self.username)
-                if self.cl.login(self.username, self.password):
-                    login_via_pw = True
-            except Exception as e:
-                logger.info("[ig_postget]: Couldn't login user using username and password: %s" % e)
+                    # check if session is valid
+                    try:
+                        self.cl.get_timeline_feed()
+                    except LoginRequired:
+                        logger.info("[ig_postget]: Session is invalid, need to login via username and password")
 
-        if not login_via_pw and not login_via_session:
-            raise Exception("[ig_postget]: Couldn't login user with either password or session")
+                        old_session = self.cl.get_settings()
+
+                        # use the same device uuids across logins
+                        self.cl.set_settings({})
+                        self.cl.set_uuids(old_session["uuids"])
+
+                        self.cl.login(self.username, self.password)
+                    login_via_session = True
+                except Exception as e:
+                    logger.info("[ig_postget]: Couldn't login user using session information: %s" % e)
+
+            if not login_via_session:
+                try:
+                    logger.info("[ig_postget]: Attempting to login via username and password. username: %s" % self.username)
+                    if self.cl.login(self.username, self.password):
+                        login_via_pw = True
+                except Exception as e:
+                    logger.info("[ig_postget]: Couldn't login user using username and password: %s" % e)
+
+            if not login_via_pw and not login_via_session:
+                raise Exception("[ig_postget]: Couldn't login user with either password or session")
+        else:
+            self.cl.login(self.username, self.password)
+            self.cl.dump_settings(path)
 
     def get_media(self, amount: int):
-        print("[ig_postget]: Initializing cache")
-        cache_key = f"{self.user_id}_{amount}"
-        if cache_key in self.cache:
-            return self.cache[cache_key]
-
-        print("[ig_postget]: Retrieving media")
+        self.user_id = self.cl.user_id_from_username(self.query)
         if self.reels:
+            print("[ig_postget]: Retrieving reel media type")
             self.medias = self.cl.user_clips(self.user_id, amount)
         elif self.tag:
+            print("[ig_postget]: Retrieving tag media type")
             self.medias = self.cl.usertag_medias(self.user_id, amount)
         else:
-            self.medias = self.cl.user_medias(self.user_id, amount)
-
-        self.results["media"] = self.medias
-        self.cache[cache_key] = self.results
-
-    def fetch_all(self):
-        total_media = self.cl.user_info(self.user_id).media_count
-        self.get_media(total_media)
+            print("[ig_postget]: Retrieving all media type")
+            self.medias= self.cl.user_medias(self.user_id, amount)
 
     def get_hashtag(self):
         print("[ig_postget]: Researching hashtags")
-        self.hashtags = self.cl.hashtag_info(self.hashtag)
+        self.hashtag_info = self.cl.hashtag_info(self.hashtag)
         if self.recent_hash != -1:
-            self.medias["recent_hashtag"] = self.cl.hashtag_medias_recent(self.hashtag, self.recent_hash)
+            self.medias = self.cl.hashtag_medias_recent(self.hashtag, self.recent_hash)
         if self.top_hash != -1:
-            self.medias["top_hashtag"] = self.cl.hashtag_medias_top(self.hashtag, self.top_hash)
-
-    def check_date(self):
-        if self.since != 'none':
-            try:
-                self.since = datetime.strptime(self.since, "%Y-%m-%d")
-            except ValueError:
-                raise WrongDateString(self.since, 'YYYY-MM-DD')
-
-        if self.until != 'none':
-            try:
-                self.until = datetime.strptime(self.until, "%Y-%m-%d")
-            except ValueError:
-                raise WrongDateString(self.until, 'YYYY-MM-DD')
-
-    def timeframe(self):
-        print("[ig_postget]: Retrieving media in provided timeframe")
-        if self.since or self.until:
-            self.fetch_all()
-
-        filtered_medias = {}
-        for category, medias in self.medias.items():
-            filtered_list = [
-                media for media in medias if self.is_within_timeframe(media.taken_at.replace(tzinfo=timezone.utc))
-            ]
-            if filtered_list:
-                filtered_medias[category] = filtered_list
-
-        self.medias = filtered_medias
-
-    def is_within_timeframe(self, media_date):
-        if self.since and self.until:
-            return self.since <= media_date <= self.until
-        elif self.since:
-            return media_date >= self.since
-        elif self.until:
-            return media_date <= self.until
-        return True
+            self.medias = self.cl.hashtag_medias_top(self.hashtag, self.top_hash)
 
     def fetch_post_data(self):
         print("[ig_postget]: Retrieving post data")
-        self.results["comments"] = {}
+        self.results["media"] = []
+        self.results["hashtag"] = []
+        if self.hashtag:
+            self.results["hashtag"].append(self.hashtag_info.dict())
         for media in self.medias:
             media_dict = media.dict()
             comments = self.cl.media_comments(media.id, self.comments)
@@ -183,25 +128,25 @@ class InstaPosts:
             self.results["media"].append(media_dict)
 
     def get_bio(self):
-        print("[ig_postget]: Retrieving bio")
         if self.bio:
+            print("[ig_postget]: Retrieving bio")
             self.results["bio"] = []
             user_bio = self.cl.user_info(self.user_id)
             self.results["bio"].append(user_bio.dict())
 
     def get_followers(self):
-        print("[ig_postget]: Retrieving list of followers")
         if self.followers != -1:
+            print("[ig_postget]: Retrieving list of followers")
             self.results["followers"] = self.cl.user_followers(self.user_id, True, self.followers)
 
     def get_following(self):
-        print("[ig_postget]: Retrieving list of following")
         if self.following != -1:
-            self.results["followers"] = self.cl.user_followers(self.user_id, True, self.following)
+            print("[ig_postget]: Retrieving list of following")
+            self.results["following"] = self.cl.user_following(self.user_id, True, self.following)
 
     def get_story(self):
-        print("[ig_postget]: Retrieving stories of user")
         if self.story != -1:
+            print("[ig_postget]: Retrieving stories of user")
             self.results["story"] = []
             stories = self.cl.user_stories(self.user_id, self.story)
             for story in stories:
@@ -210,14 +155,14 @@ class InstaPosts:
 
     def save(self):
         print("[ig_postget]: Saving parsed data in .json")
-        json_data = json.dumps(self.results, indent=4, default=str)
-        with open('ig_crawled_bio.json', 'w') as json_file:
+        json_data = json.dumps(self.results, indent=4, default=str, ensure_ascii=False)
+        with open('ig_crawled.json', 'w') as json_file:
             json_file.write(json_data)
-        print("Data has been written to .json")
+        print("[ig_postget]: Data has been written to .json")
 
     def clear_media(self):
         self.results = {}
-        self.medias = {}
+        self.medias = []
 
     def logout(self):
         print("[ig_postget]: logging out")
