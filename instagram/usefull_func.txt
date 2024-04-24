@@ -1,6 +1,0 @@
-https://subzeroid.github.io/instagrapi/usage-guide/fundamentals.html
-
-https://subzeroid.github.io/instagrapi/usage-guide/insight.html
-
-https://subzeroid.github.io/instagrapi/usage-guide/best-practices.html
-
