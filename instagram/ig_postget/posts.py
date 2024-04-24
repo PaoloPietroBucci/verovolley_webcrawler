@@ -1,10 +1,12 @@
 from instagrapi import Client
+from instagrapi.exceptions import LoginRequired
+import logging
 import json
-import time
 from datetime import datetime, timezone
 from cachetools import TTLCache
 from .exceptions.exceptions import WrongDateString
 
+logger = logging.getLogger()
 
 class InstaPosts:
     cache = TTLCache(maxsize=10000, ttl=3600)
@@ -51,10 +53,54 @@ class InstaPosts:
 
         # Initialization of instagrapi
         print("[ig_postget]: Initializing client")
-        self.cl = Client()
-        self.cl.login(self.username, self.password)
-        time.sleep(3)
+        self.login_user()
+        self.cl.delay_range = [1, 3]
         self.user_id = self.cl.user_id_from_username(self.query)
+
+    def login_user(self):
+        """
+        Attempts to login to Instagram using either the provided session information
+        or the provided username and password.
+        """
+
+        self.cl = Client()
+        session = self.cl.load_settings("session.json")
+
+        login_via_session = False
+        login_via_pw = False
+
+        if session:
+            try:
+                self.cl.set_settings(session)
+                self.cl.login(self.username, self.password)
+
+                # check if session is valid
+                try:
+                    self.cl.get_timeline_feed()
+                except LoginRequired:
+                    logger.info("[ig_postget]: Session is invalid, need to login via username and password")
+
+                    old_session = self.cl.get_settings()
+
+                    # use the same device uuids across logins
+                    self.cl.set_settings({})
+                    self.cl.set_uuids(old_session["uuids"])
+
+                    self.cl.login(self.username, self.password)
+                login_via_session = True
+            except Exception as e:
+                logger.info("[ig_postget]: Couldn't login user using session information: %s" % e)
+
+        if not login_via_session:
+            try:
+                logger.info("[ig_postget]: Attempting to login via username and password. username: %s" % self.username)
+                if self.cl.login(self.username, self.password):
+                    login_via_pw = True
+            except Exception as e:
+                logger.info("[ig_postget]: Couldn't login user using username and password: %s" % e)
+
+        if not login_via_pw and not login_via_session:
+            raise Exception("[ig_postget]: Couldn't login user with either password or session")
 
     def get_media(self, amount: int):
         print("[ig_postget]: Initializing cache")
@@ -102,7 +148,7 @@ class InstaPosts:
         print("[ig_postget]: Retrieving media in provided timeframe")
         if self.since or self.until:
             self.fetch_all()
-        time.sleep(5)
+
         filtered_medias = {}
         for category, medias in self.medias.items():
             filtered_list = [
@@ -130,7 +176,6 @@ class InstaPosts:
             comments = self.cl.media_comments(media.id, self.comments)
             comments_data = [comment.dict() for comment in comments]
             media_dict["comments"] = comments_data
-            time.sleep(1)
             if self.likers:
                 likes = self.cl.media_likers(media.id)
                 likes_data = [user.dict() for user in likes]
