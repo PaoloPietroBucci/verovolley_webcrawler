@@ -30,9 +30,7 @@ class WebCrawlerGazzetta(Spider):
 
         # Recursively go to the next page
         if next_page_link:
-            #yield Request(next_page_link, callback=self.parse)
-            pass
-
+            yield Request(next_page_link, callback=self.parse)
 
 
     def parse_articles(self, response):

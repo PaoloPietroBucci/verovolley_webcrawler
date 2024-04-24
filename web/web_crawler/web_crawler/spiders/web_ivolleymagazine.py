@@ -15,6 +15,7 @@ class OASportSpider(Spider):
             yield Request(url=link, callback=self.parse_article)
         next_page = response.xpath('//li[contains(@class, "next")]/a/@href').get()
         yield Request(url=next_page, callback=self.parse)
+        
     def parse_article(self, response):
         post = BlogPostItem()
         article_paragrafs = response.xpath('//div[contains(@class, "entry-content")]/p/text()').getall()
