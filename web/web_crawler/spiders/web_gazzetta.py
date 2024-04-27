@@ -5,9 +5,10 @@ from scrapy.linkextractors import LinkExtractor
 
 from web_crawler.items import BlogPostItem
 
+import unidecode
 
 class WebCrawlerGazzetta(Spider):
-    name = "web_crawler_gazzetta"
+    name = "gazzetta"
 
     allowed_domains = ["dal15al25.gazzetta.it"]
     start_urls = [
@@ -33,20 +34,54 @@ class WebCrawlerGazzetta(Spider):
 
 
     def parse_articles(self, response):
-        item = BlogPostItem()
-        item['title'] = response.xpath('//*[@class="article-title"]/h1/text()').extract()[0]
-        item['content'] = ' '.join(response.xpath('//*[@class="article-content"]/p/text()').extract())
-        item['link'] = response.url
-        item['comments'] = []
+        post = BlogPostItem()
 
+        # Format title
+        post['title'] = unidecode.unidecode(response.xpath('//*[@class="article-title"]/h1/text()').extract()[0])
+
+        # Format date
+        raw_date = response.xpath('//*[@class="article-datetime"]/text()').extract()[0].strip()
+        post['date'] = self.format_date(raw_date)
+        # Format content
+        post['content'] = unidecode.unidecode(' '.join(response.xpath('//*[@class="article-content"]/p/text()').extract()))
+
+        # Add link
+        post['link'] = response.url
+
+        # Add comments
+        post['comments'] = []
         comments = response.xpath('//*[@class="commentlist"]/li')
         for comment in comments:
             comment_obj = {
                 'user': comment.xpath('.//*[@class="comment_author"]/text()').extract()[0],
                 'created_at_utc': comment.xpath('.//*[@class="comment_time"]/text()').extract()[0],
-                'text': " ".join(comment.xpath('.//*[@class="comment_text"]/p/text()').extract()),
+                'text': unidecode.unidecode(" ".join(comment.xpath('.//*[@class="comment_text"]/p/text()').extract())).strip(),
             }
-            item['comments'].append(comment_obj)
+            post['comments'].append(comment_obj)
 
+        yield post
 
-        yield item
+    def map_months(self, month):
+        # map the inputs to the function blocks
+        months_mapping = {
+        'gennaio': '1',
+        'febbraio': '2',
+        'marzo': '3',
+        'aprile': '4',
+        'maggio': '5',
+        'gunio': '6',
+        'luglio': '7',
+        'agosto': '8',
+        'settembre': '9',
+        'ottobre': '10',
+        'novembre': '11',
+        'dicembre': '12',
+        '': ''
+        }
+
+        return months_mapping[month]
+
+    def format_date(self, raw_date):
+        month = self.map_months(raw_date.split(' ')[1])
+        formatted_date = raw_date.split(' ')[0] + "/" + month + "/" + raw_date.split(' ')[2]
+        return formatted_date

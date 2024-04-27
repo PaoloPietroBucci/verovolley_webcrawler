@@ -7,7 +7,7 @@ from web_crawler.items import BlogPostItem
 
 
 class WebCrawlerVolleyNews(Spider):
-    name = "web_volley_news"
+    name = "volley_news"
 
     allowed_domains = ["www.volleynews.it"]
     start_urls = [
