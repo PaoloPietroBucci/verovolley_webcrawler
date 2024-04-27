@@ -1,5 +1,6 @@
 import argparse
-from x_postget.posts import posts
+from postget.posts import Posts
+from postget.exceptions.exceptions import *
 
 
 def parse_args():
