@@ -1,11 +1,6 @@
 import argparse
-<<<<<<< HEAD:x/x_main.py
 from postget.posts import Posts
 from postget.exceptions.exceptions import *
-=======
-from x_postget.posts import Posts
-from x_postget.exceptions.exceptions import *
->>>>>>> main:x/main.py
 
 
 def parse_args():
