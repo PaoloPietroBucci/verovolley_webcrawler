@@ -100,9 +100,9 @@ class Posts:
             print(
                 '[x_postget]: Running in root mode. This is not recommended for security reasons, disabling sandbox to allow run chromium.')
         if chromedriver != 'none':
-            self.driver = webdriver.Chrome(chromedriver)
+            self.driver = webdriver.Chrome(chromedriver, chrome_options=self.chrome_options)
         else:
-            self.driver = webdriver.Chrome(shutil.which('chromedriver'))
+            self.driver = webdriver.Chrome(shutil.which('chromedriver'), chrome_options=self.chrome_options)
         self.driver.maximize_window()
         self.wait = WebDriverWait(self.driver, 30)
         self.driver.get(TARGET_URL)
