@@ -1,1 +1,4 @@
 instagrapi
+pillow
+datetime
+cachetools
