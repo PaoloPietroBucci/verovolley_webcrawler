@@ -3,7 +3,7 @@ from scrapy.selector import Selector
 from scrapy.spiders import CrawlSpider, Rule
 from scrapy.linkextractors import LinkExtractor
 
-from web_crawler.items import WebCrawlerItem
+from web_crawler.items import BlogPostItem
 
 
 class WebCrawlerVolleyNews(Spider):
@@ -34,7 +34,7 @@ class WebCrawlerVolleyNews(Spider):
 
 
     def parse_posts(self, response):
-        item = WebCrawlerItem()
+        item = BlogPostItem()
         ss = response.xpath('//*[@class="elementor-element elementor-element-34954c7b elementor-widget elementor-widget-theme-post-title elementor-page-title elementor-widget-heading"]')
         item['title'] = response.xpath('//*[@class="elementor-element elementor-element-34954c7b elementor-widget elementor-widget-theme-post-title elementor-page-title elementor-widget-heading"]/div/h1/text()').extract()[0]
         item['content'] = ' '.join(response.xpath('//*[@class="elementor-element elementor-element-3104ed9c elementor-drop-cap-view-stacked elementor-drop-cap-yes elementor-widget-text-editor elementor-widget elementor-widget-my-custom-post-content"]/div/p/text()').extract())

@@ -6,8 +6,8 @@
 import scrapy
 
 
-class WebCrawlerItem(scrapy.Item):
-    # define the fields for your item here like:
+class BlogPostItem(scrapy.Item):
+    # define the fields for item :
     title = scrapy.Field()
     date = scrapy.Field()
     link = scrapy.Field()
@@ -16,7 +16,3 @@ class WebCrawlerItem(scrapy.Item):
     comment_count = scrapy.Field()
     comments = scrapy.Field()
     pass
-
-class BlogPostItem(scrapy.Item):
-    title = scrapy.Field()
-    content = scrapy.Field()

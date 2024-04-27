@@ -3,7 +3,7 @@ from scrapy.selector import Selector
 from scrapy.spiders import CrawlSpider, Rule
 from scrapy.linkextractors import LinkExtractor
 
-from web_crawler.items import WebCrawlerItem
+from web_crawler.items import BlogPostItem
 
 
 class WebCrawlerGazzetta(Spider):
@@ -17,7 +17,6 @@ class WebCrawlerGazzetta(Spider):
     def parse(self, response):
         # Logic of how to extract the HTML
         article_list = Selector(response).xpath('//*[@class="articles-list"]/article/div/div/p/a')
-        print(article_list)
 
         next_page = Selector(response).xpath('//*[@class="next-posts"]/a/@href').extract()
 
@@ -34,7 +33,7 @@ class WebCrawlerGazzetta(Spider):
 
 
     def parse_articles(self, response):
-        item = WebCrawlerItem()
+        item = BlogPostItem()
         item['title'] = response.xpath('//*[@class="article-title"]/h1/text()').extract()[0]
         item['content'] = ' '.join(response.xpath('//*[@class="article-content"]/p/text()').extract())
         item['link'] = response.url

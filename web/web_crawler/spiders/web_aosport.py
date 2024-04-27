@@ -15,7 +15,7 @@ class OASportSpider(Spider):
             yield Request(url=link, callback=self.parse_article)
         next_page = response.xpath('//div[contains(@class, "pagination")]/a/@href').getall()
         yield Request(url=next_page[-2], callback=self.parse)
-        
+
     def parse_article(self, response):
         post = BlogPostItem()
         article_paragrafs = response.xpath('//div[@id="mvp-content-main"]/p//text()').getall()
@@ -24,4 +24,5 @@ class OASportSpider(Spider):
         post['title'] = article_title
         post['content'] = unique_text
         yield post
+
 #  scrapy crawl oasport -o output.json

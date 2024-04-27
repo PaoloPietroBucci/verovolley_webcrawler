@@ -3,7 +3,7 @@ from scrapy.selector import Selector
 from scrapy.spiders import CrawlSpider, Rule
 from scrapy.linkextractors import LinkExtractor
 
-from web_crawler.items import WebCrawlerItem
+from web_crawler.items import BlogPostItem
 
 
 class WebCrawlerVolleyball(Spider):
@@ -25,8 +25,6 @@ class WebCrawlerVolleyball(Spider):
 
 
     def parse_article_list(self, response):
-        item = WebCrawlerItem()
-
         # Logic of how to extract the HTML
         news_list = Selector(response).xpath('//*[@class="news-searchlist-item"]/h2/a')
 
@@ -37,7 +35,6 @@ class WebCrawlerVolleyball(Spider):
             # Find the next page
             if(next_page.xpath('text()').extract()[0] == '>'):
                 next_page_link = next_page.xpath('@href').extract()[0]
-                print(next_page_link)
 
         for news_item in news_list:
             # Trigger recursively the parsing of posts
@@ -49,7 +46,7 @@ class WebCrawlerVolleyball(Spider):
             yield Request(next_page_link, callback=self.parse_article_list)
 
     def parse_article(self, response):
-        item = WebCrawlerItem()
+        item = BlogPostItem()
         item['title'] = response.xpath('//*[@class="title"]/text()').extract()[0]
         item['date'] = response.xpath('//*[@class="news-list-date-header"]/text()').extract()[0]
         item['content'] = ' '.join(response.xpath('//*[@class="news-single-content"]/p/text()').extract())
