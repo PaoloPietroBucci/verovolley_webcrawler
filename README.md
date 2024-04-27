@@ -127,7 +127,31 @@ Parameter | type                                                                
 
 ___
 ## Linkedin
-... *in development*
+### To Do
+- get profile information about the current and previous work experiences
+
+### CLI - examples
+An example of command is (in the following a detailed explanation is provided):
+```
+# python3 main.py --username <your_username> --password <your_password> --query <profile_url> --numposts <number_of_posts>
+```
+
+### Command Line
+You can use this package from command line, `postget` will:
+1. Login a new session and create a **last_cookies.json** or a previously created one by selecting the **last_cookies.json**
+   1. *The **last_cookies.json** is needed to simulate a saved login from the same device. In real life, you login to Linkedin on a device once and then you can use it for a long time without logging in again;*
+   2. *If you are willing to take risks, you can manually delete the created session.json file and the package will run the same as the first time you booted it.*
+2. Search for the requested profile url
+3. Save found information in a **.json** file that can be used in a MongoDB environment
+4. Close the driver
+
+### Main parameters in the initialization
+Parameter | type                                                                    | Description
+--- |-------------------------------------------------------------------------| ---
+`username` | (`str`):                                                                |Username that will be used to access the Linkedin account
+`password` | (`str`):                                                                |Password of the Username that will be used access the Linkedin account
+`query` | (`str`):                                                                |Profile url to be searched on Linkedin
+`num_posts` | (`int`):                                                                |Number of posts to scrape starting from the most recent one. Set to `3` (default value).
 
 ___
 ## X
