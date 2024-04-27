@@ -98,12 +98,13 @@ python3 main.py --username '<your_username>' --password '<your_password>' --quer
 
 ### Command Line
 You can use this package from command line, `postget` will:
-1. log in a new session or a previously created one
-2. search for the query according to the operating mode
-3. save found information in a .json file that can be used in a MongoDB environment according to the operating mode
-4. close the driver
-
-Notice that this means that a second call will imply a new login phase.
+1. Login a new session and create a **session.json** or a previously created one by selecting the **session.json**
+   1. *The **session.json** is needed to simulate a saved login from the same device. In real life, you login to Instagram on a device once and then you can use it for a long time without logging in again;*
+   2. *To mitigate the risks of your account being suspended, if multiple requests are sent in a short timeframe the package will throw an exception;*
+   3. *If you are willing to take risks, you can manually delete the created session.json file and the package will run the same as the first time you booted it.*
+2. Search for the query according to the operating mode
+3. Save found information in a **.json** file that can be used in a MongoDB environment according to the operating mode
+4. Close the driver
 
 ### Main parameters in the initialization
 Parameter | type                                                                    | Description
