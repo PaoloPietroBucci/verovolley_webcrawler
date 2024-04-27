@@ -5,6 +5,8 @@ from scrapy.linkextractors import LinkExtractor
 
 from web_crawler.items import BlogPostItem
 
+import unidecode
+
 
 class WebCrawlerVolleyball(Spider):
     name = "volleyball"
@@ -46,10 +48,51 @@ class WebCrawlerVolleyball(Spider):
             yield Request(next_page_link, callback=self.parse_article_list)
 
     def parse_article(self, response):
-        item = BlogPostItem()
-        item['title'] = response.xpath('//*[@class="title"]/text()').extract()[0]
-        item['date'] = response.xpath('//*[@class="news-list-date-header"]/text()').extract()[0]
-        item['content'] = ' '.join(response.xpath('//*[@class="news-single-content"]/p/text()').extract())
-        item['link'] = response.url
+        post = BlogPostItem()
 
-        yield item
+        # Format title
+        post['title'] = unidecode.unidecode(response.xpath('//*[@class="title"]/text()').extract()[0])
+
+        # Format date
+        raw_date = response.xpath('//*[@class="news-list-date-header"]/text()').extract()[0]
+        post['date'] = self.format_date(raw_date)
+
+        # Format text
+        raw_text = response.xpath('//*[@class="news-single-content"]/p')
+        inner_text = self.format_innertext(raw_text)
+        # Format accents and special characters
+        formatted_text = unidecode.unidecode(inner_text[0] if inner_text else "")
+        post['content'] = formatted_text
+
+        # Add link
+        post['link'] = response.url
+
+        yield post
+
+    def map_months(self, month):
+        # map the inputs to the function blocks
+        months_mapping = {
+        'gennaio': '1',
+        'febbraio': '2',
+        'marzo': '3',
+        'aprile': '4',
+        'maggio': '5',
+        'gunio': '6',
+        'luglio': '7',
+        'agosto': '8',
+        'settembre': '9',
+        'ottobre': '10',
+        'novembre': '11',
+        'dicembre': '12',
+        '': ''
+        }
+
+        return months_mapping[month]
+
+    def format_date(self, raw_date):
+        month = self.map_months(raw_date.split(' ')[1])
+        formatted_date = raw_date.split(' ')[0] + "/" + month + "/" + raw_date.split(' ')[2] + ' ' + raw_date.split(' ')[3]
+        return formatted_date
+
+    def format_innertext(self, elements, delimiter=" "):
+        return list(delimiter.join(el.strip() for el in element.css('*::text').getall()) for element in elements)
