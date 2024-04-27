@@ -54,6 +54,5 @@ class WebCrawlerSkySport(Spider):
 
         yield post
 
-
     def format_innertext(self, elements, delimiter=" "):
         return list(delimiter.join(el.strip() for el in element.css('*::text').getall()) for element in elements)

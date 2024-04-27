@@ -51,6 +51,5 @@ class WebCrawlerVolleyball(Spider):
         item['date'] = response.xpath('//*[@class="news-list-date-header"]/text()').extract()[0]
         item['content'] = ' '.join(response.xpath('//*[@class="news-single-content"]/p/text()').extract())
         item['link'] = response.url
-        item['comments'] = []
 
         yield item
