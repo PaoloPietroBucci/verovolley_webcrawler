@@ -11,7 +11,7 @@ import json
 
 class WebCrawlerPipeline:
     def open_spider(self, spider):
-        self.file = open('output.json', 'w')
+        self.file = open(f'{spider.name}_output.json', 'w')
         # Your scraped items will be saved in the file 'scraped_items.json'.
         # You can change the filename to whatever you want.
         self.file.write("[")
