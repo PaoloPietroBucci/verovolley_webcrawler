@@ -27,7 +27,7 @@ Navigate to [Google Chrome’s](https://www.google.com/chrome/) official website
 If you use Ubuntu, you can instead install Chrome through the snap store. If done with this method, chromedriver should be installed automatically. You may check it by [verifying](#2-verify-chromedriver) if present in your machine and if present you can skip the chromedriver installation described in the next step.
 
 ## Installing Chromedriver
-Notice that this is **required** for most of the presented packages to work. 
+Notice that this is **required** for most of the presented packages to work.
 ### 1. Determine your Chrome version
 Open Google Chrome, click on the **three vertical dots** on the top right **-> Help -> About Google Chrome**. Note down the version number.
 ### 2. Download the appropriate ChromeDriver
@@ -45,13 +45,13 @@ sudo mv chromedriver /usr/bin/
 *Tested on [chromium](https://googlechromelabs.github.io/chrome-for-testing/) and [chromedriver](https://googlechromelabs.github.io/chrome-for-testing/) v.123.0.6312.122*
 
 ## Virtual Environment
-Creation of a new virtual environment is **highly recommended**, every time you a crawler for a different social. 
+Creation of a new virtual environment is **highly recommended**, every time you a crawler for a different social.
 
 In the home folder of a linux system:
 ```
 python3 -m venv ./venv
 ```
-Acrivate it:
+Activate it:
 ```
 source venv/bin/activate
 ```
@@ -77,14 +77,14 @@ This will display Selenium package details, confirming its installation in your 
 
 ---
 # Usage
-Since every social was created with a different architecture in mind, the methods to extract data may differ for one another. Nonetheless, for an easier use, we tried to maintain the same formatting in the parser throughout the different platforms, changes may be encountered in the arguments to pass. 
+Since every social was created with a different architecture in mind, the methods to extract data may differ for one another. Nonetheless, for an easier use, we tried to maintain the same formatting in the parser throughout the different platforms, changes may be encountered in the arguments to pass.
 
 Once the command is sent, the program will begin its execution accessing the social with credentials (if needed) and will start scraping the specified info, once its done the program will create a .json file that can be used in a MongoDB environment, ready to be analyzed. Below you can find the CLI parameters that can be passed per social scraper.  
 
 ___
 ## Facebook
 ... *in development*
- 
+
 ___
 ## Instagram
 ### To Implement
@@ -93,7 +93,7 @@ ___
 ### CLI - examples
 An example of command is (in the following a detailed explanation is provided):
 ```
-python3 main.py --username '<your_username>' --password '<your_password>' --query '<query_to_be_performed>' 
+python3 main.py --username '<your_username>' --password '<your_password>' --query '<query_to_be_performed>'
 ```
 
 ### Command Line
@@ -115,15 +115,15 @@ Parameter | type                                                                
 `reels` | (`bool` if imported, just type `--reels` if called from command line):  |Call with this if you want get list of reels as the only media
 `tag` | (`bool` if imported, just type `--tag` if called from command line):    |Call with this if you want get list of only the posts the user was tagged in
 `hashtag` | (`str`):                                                                |Hashtag to be searched on Instagram. With a list of related posts under the hashtag
-`recent_hash` | (`int`):                                                                |Return the selected amount of most recent posts by hashtag. If set to `-1` (default value) this parameter will not be considered. 
-`top_hash` | (`int`):                                                                |Return the selected amount of top posts by hashtag. If set to `-1` (default value) this parameter will not be considered. 
+`recent_hash` | (`int`):                                                                |Return the selected amount of most recent posts by hashtag. If set to `-1` (default value) this parameter will not be considered.
+`top_hash` | (`int`):                                                                |Return the selected amount of top posts by hashtag. If set to `-1` (default value) this parameter will not be considered.
 `num_posts` | (`int`):                                                                |Number of posts to scrape starting from the most recent one. Set to `3` (default value).
 `comments` | (`int`):                                                                |Number of comments to scrape from each post. Set to `0` (default value) means all the comments of the post will be saved.
 `likers` | (`bool` if imported, just type `--likers` if called from command line): |Call with this if you also want get list of users who liked the post (due to Instagram limitations, this may not return a complete list)
 `bio` | (`bool` if imported, just type `--bio` if called from command line):    |Call with this if you also want get the bio of the user you are searching for
-`followers` | (`int`):                                                                |Call with this if you also want get a list of the amount of users who followers the user. If set to `-1` (default value) this parameter will not be considered. 
-`following` | (`int`):                                                                |Call with this if you also want get a list of the amount of users who the user follows. If set to `-1` (default value) this parameter will not be considered. 
-`story` | (`int`):                                                                |Call with this if you also want get a list of the amount of stories published by the user. If set to `-1` (default value) this parameter will not be considered. 
+`followers` | (`int`):                                                                |Call with this if you also want get a list of the amount of users who followers the user. If set to `-1` (default value) this parameter will not be considered.
+`following` | (`int`):                                                                |Call with this if you also want get a list of the amount of users who the user follows. If set to `-1` (default value) this parameter will not be considered.
+`story` | (`int`):                                                                |Call with this if you also want get a list of the amount of stories published by the user. If set to `-1` (default value) this parameter will not be considered.
 
 ___
 ## Linkedin
@@ -169,7 +169,7 @@ python3 main.py --username '<your_username>' --password '<your_password>' --quer
 - **Mode `0`**, or *simple search*: it just grep all links of images and videos detected when scrolling
 - **Mode `1`**, or *complete search*: it greps also all information of tweet, such as id of the discussion and author. Notice that if you want to perform the search within two tweets' ids, it is necessary to operate in this mode.
 
-Why keeping both? Because in mode `1` many things can go wrong, it is sufficient that one div search fails, that the entire search crashes. 
+Why keeping both? Because in mode `1` many things can go wrong, it is sufficient that one div search fails, that the entire search crashes.
 
 ### Command Line
 You can use this package from command line, `postget` will:
@@ -212,4 +212,25 @@ A couple of words on advenced filters:
 ___
 
 ## Web pages
-...
+The web crawler uses Scrapy, an open source library used to easily crawl HTML in python. In addition, we also used a couple of other libraries to preprocess the crawled text. As we mentioned in the Virtual Environment part, all the libraries required for the project are in the requirements.txt file. (Refer to that part for instruction on how to install them)
+
+### Websites
+Since there are different websites and blogs to crawl, the website needs to be specified. There's 6 different crawlers (called spiders in scrapy) respectively for each website/blog.
+
+Blog Name         | Crawler Name            | Link
+------------------|-------------------------|----------
+VOLLEY NEWS       | volley_news             | https://www.volleynews.it/category/serie-a/a1femminile/
+VOLLEYBALL        | volleyball              | https://volleyball.it/nc/istituzionale/archivio.html
+DAL 15 AL 25      | gazzetta                | https://dal15al25.gazzetta.it/
+SKY SPORT         | sky_sport               | https://sport.sky.it/argomenti/italvolley
+IVOLLEY MAGAZINE  | ivolleymagazine         | https://www.ivolleymagazine.it/category/news/campionati/a2-maschile-e-femminile/
+OA SPORT          | oasport                 | https://www.oasport.it/category/squadre/pallavolo/
+
+### Command Line
+To run a specific crawler you will need to run the following command in the folder of the web crawler (i.e. web/):
+```
+scrapy crawl [name_of_crawler]
+```
+The [name_of_crawler] can be replaced by any of the crawler names specified in the table above. i.e. volley_news, volleyball, gazzetta, sky_sport, ivolleymagazine, and oasport.
+
+Please note that the json output of the crawler is stored in web/[crawler_name]_output.json. Each time that specific crawler is run the file is overwritten. If you want to change the name of the file manually you can modify line 14 of web/web_crawler/pipelines.py and change the name of the file before running the crawler.
