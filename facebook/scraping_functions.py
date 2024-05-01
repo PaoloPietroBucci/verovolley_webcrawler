@@ -127,7 +127,7 @@ def get_comments(browser, comments_url, comments_list, post) -> []:
         for index, comment in enumerate(comments_in_the_current_page):
             if index != len(comments_in_the_current_page) - 1 and index != 0:
                 author = comment.find('h3').text
-                comment_body = comment.find('div').text.replace(author, '')
+                comment_body = comment.find('div').div.text
                 likes_img = comment.find('h3').find_next_siblings('div')[2].find('img')
                 if likes_img:
                     likes_num = likes_img.findParent('a').text
