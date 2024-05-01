@@ -26,7 +26,6 @@ def get_posts(posts_url: str, num_posts: int, browser: WebDriver, posts_list: li
     next_page_link = None
     divs = soup.find('div', id="structured_composer_async_container").findChildren('div')
     for div in divs:
-        print(div)
         if 'See more stories' in div.text:
             next_page_link = div.find('a').get('href')
     sleep(2)
@@ -64,7 +63,7 @@ def get_posts(posts_url: str, num_posts: int, browser: WebDriver, posts_list: li
             # Get comments for a post
             comments_list = []
             comment_link = 'https://mbasic.facebook.com/' + footer[3].get('href')
-            get_comments(browser, comment_link, comments_list)
+            get_comments(browser, comment_link, comments_list, post)
             posts_list.append({
                 'content': post_content,
                 'num_likes': num_likes,
@@ -72,7 +71,6 @@ def get_posts(posts_url: str, num_posts: int, browser: WebDriver, posts_list: li
                 'comments': comments_list
             })
             post_count = post_count + 1
-        print(next_page_link)
         if next_page_link != None:
             next_url = 'https://mbasic.facebook.com/' + next_page_link
             get_posts(next_url, num_posts, browser, posts_list, post_count)
@@ -118,31 +116,33 @@ def get_profile_info(profile_url: str, browser: WebDriver):
         json_file.write(json_info)
 
 
-def get_comments(browser, comments_url, comments_list) -> []:
-    sleep(2)
-    browser.get(comments_url)
-    comment_page_soup = BeautifulSoup(browser.page_source, 'html.parser')
-    comments_in_the_current_page = comment_page_soup.find('div', id='m_story_permalink_view').contents[1].contents[0].contents[4].contents
-    # last div contains the link to next comment page, /html/body/div/div/div[2]/div/div[1]/div[2]/div/div[5]
-    print(len(comments_in_the_current_page))
-    for index, comment in enumerate(comments_in_the_current_page):
-        if index != len(comments_in_the_current_page) - 1 and index != 0:
-            author = comment.find('h3').text
-            comment_body = comment.find('div').text.replace(author, '')
-            likes_img = comment.find('h3').find_next_siblings('div')[2].find('img')
-            if likes_img:
-                likes_num = likes_img.findParent('a').text
-            else:
-                likes_num = '0'
-            comments_list.append(
-                {'author': author, 'body': comment_body, 'likes_num': likes_num}
-            )
-    # go to next comment page and continue scraping
-    if len(comments_in_the_current_page) > 0:
-        if 'View more comments…' in comments_in_the_current_page[-1].text:
-            next_comment_page = 'https://mbasic.facebook.com/' + comments_in_the_current_page[-1].find('a').get('href')
-            get_comments(browser, next_comment_page, comments_list)
-
+def get_comments(browser, comments_url, comments_list, post) -> []:
+    try:
+        sleep(2)
+        browser.get(comments_url)
+        comment_page_soup = BeautifulSoup(browser.page_source, 'html.parser')
+        root_comments_in_the_current_page = comment_page_soup.find('div', id='m_story_permalink_view')
+        comments_in_the_current_page=root_comments_in_the_current_page.contents[1].contents[0].contents[4].contents
+        # last div contains the link to next comment page, /html/body/div/div/div[2]/div/div[1]/div[2]/div/div[5]
+        for index, comment in enumerate(comments_in_the_current_page):
+            if index != len(comments_in_the_current_page) - 1 and index != 0:
+                author = comment.find('h3').text
+                comment_body = comment.find('div').text.replace(author, '')
+                likes_img = comment.find('h3').find_next_siblings('div')[2].find('img')
+                if likes_img:
+                    likes_num = likes_img.findParent('a').text
+                else:
+                    likes_num = '0'
+                comments_list.append(
+                    {'author': author, 'body': comment_body, 'likes_num': likes_num}
+                )
+        # go to next comment page and continue scraping
+        if len(comments_in_the_current_page) > 0:
+            if 'View more comments…' in comments_in_the_current_page[-1].text:
+                next_comment_page = 'https://mbasic.facebook.com/' + comments_in_the_current_page[-1].find('a').get('href')
+                get_comments(browser, next_comment_page, comments_list, post)
+    except Exception as e:
+        print(e, post)
     return
 
 
