@@ -1,13 +1,8 @@
 import json
-import argparse
 from time import sleep
-from selenium import webdriver
 from selenium.webdriver.chrome.webdriver import WebDriver
-from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from bs4 import BeautifulSoup
-from lxml import etree
 
 
 # currently the get_profile_Info() is suited only on the content of 'verovolley'
