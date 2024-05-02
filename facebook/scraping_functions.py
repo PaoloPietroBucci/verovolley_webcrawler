@@ -3,6 +3,9 @@ from time import sleep
 from selenium.webdriver.chrome.webdriver import WebDriver
 from selenium.webdriver.common.by import By
 from bs4 import BeautifulSoup
+import traceback
+
+from facebook.Post import Post
 
 
 # currently the get_profile_Info() is suited only on the content of 'verovolley'
@@ -12,66 +15,140 @@ from bs4 import BeautifulSoup
 #  1. If present > save the content
 #  2. If not present > save None in the json
 
-def get_posts(posts_url: str, num_posts: int, browser: WebDriver, posts_list: list, post_count=0):
+def get_posts(posts_url: str, num_posts: int, browser: WebDriver, posts_list: list,json_file, post_count=0):
     # To be returned
-    print('Scraped post:', post_count)
-    # do always
-    browser.get(posts_url)
-    soup = BeautifulSoup(browser.page_source, 'html.parser')  # Can be used to go to the next page
-    next_page_link = None
-    divs = soup.find('div', id="structured_composer_async_container").findChildren('div')
-    for div in divs:
-        if 'See more stories' in div.text:
-            next_page_link = div.find('a').get('href')
+    try:
+        print('Scraped post:', post_count)
+        # do always
+        browser.get(posts_url)
+        soup = BeautifulSoup(browser.page_source, 'html.parser')  # Can be used to go to the next page
+        next_page_link = None
+        divs = soup.find('div', id="structured_composer_async_container").findChildren('div')
+        for div in divs:
+            if 'See more stories' in div.text:
+                next_page_link = div.find('a').get('href')
+        sleep(2)
+        # Termination condition
+        if post_count >= num_posts:
+            return
+        #else: recursion
+        else:
+            posts = soup.find('section').find_all('article')
+            print('posts in this page: {}'.format(len(posts)))
+            for post in posts:
+                # Get post content
+                paragraphs = post.find_all('p')
+                text = []
+                for paragraph in paragraphs:
+                    text.append(paragraph.text.strip())
+                post_content = "".join(text)
+
+                #Get post date
+                post_date = post.find('abbr').text
+
+                # Get post likes
+                footer_element = post.find('footer').find('a')
+                likes = footer_element.text
+                # If there's no likes this text should be just "Like"
+                if any(char.isdigit() for char in likes):
+                    num_likes = likes.split(' ')[0]
+                else:
+                    num_likes = 0
+
+                # Get number of comments
+                footer = post.find('footer').find_all('a')
+                comments = footer[3].text
+                # If there's no comments this text should be just "Comment"
+                if any(char.isdigit() for char in comments):
+                    num_comments = comments.split(' ')[0]
+                else:
+                    num_comments = 0
+
+                # Get comments for a post
+                comments_list = []
+                comment_link = 'https://mbasic.facebook.com/' + footer[3].get('href')
+                get_comments(browser, comment_link, comments_list, post_content)
+                new_post ={
+                    'content': post_content,
+                    'date': post_date,
+                    'num_likes': num_likes,
+                    'num_comments': num_comments,
+                    'comments': comments_list
+                }
+                print(post_content)
+                print('Comments for this post: {}'.format(len(comments_list)))
+                posts_list.append(new_post)
+                json.dump(new_post, json_file, indent=4, ensure_ascii=False)
+                post_count = post_count + 1
+            if next_page_link != None:
+                next_url = 'https://mbasic.facebook.com/' + next_page_link
+                get_posts(next_url, num_posts, browser, posts_list, json_file,post_count)
+    except Exception as e:
+        print(e)
+        traceback.print_exc()
+    return
+
+
+def get_comments(browser, comments_url, comments_list, post_content) -> []:
+    try:
+        sleep(4)
+        browser.get(comments_url)
+        comment_page_soup = BeautifulSoup(browser.page_source, 'html.parser')
+        root_comments_in_the_current_page = comment_page_soup.find('div', id='m_story_permalink_view')
+        comments_in_the_current_page=root_comments_in_the_current_page.contents[1].contents[0].contents[4].contents
+        # last div contains the link to next comment page, /html/body/div/div/div[2]/div/div[1]/div[2]/div/div[5]
+        for index, comment in enumerate(comments_in_the_current_page):
+            if index != len(comments_in_the_current_page) - 1 and index != 0:
+                author = comment.find('h3').text
+                comment_body = comment.find('div').div.text
+                date = comment.find('abbr').text
+                likes_img = comment.find('h3').find_next_siblings('div')[2].find('img')
+                if likes_img:
+                    likes_num = likes_img.findParent('a').text
+                else:
+                    likes_num = '0'
+                comments_list.append(
+                    {'author': author, 'body': comment_body, 'likes_num': likes_num, 'date':date}
+                )
+        # go to next comment page and continue scraping
+        if len(comments_in_the_current_page) > 0:
+            if 'View more comments…' in comments_in_the_current_page[-1].text:
+                next_comment_page = 'https://mbasic.facebook.com/' + comments_in_the_current_page[-1].find('a').get('href')
+                get_comments(browser, next_comment_page, comments_list, post_content)
+    except Exception as e:
+        print(e,' error in post: ' , post_content)
+    return
+
+
+def login(args, browser):
+    browser.get('https://mbasic.facebook.com/login')
+    try:  # Get the cookies from the last session
+        with open('session.json', 'r') as json_file:
+            cookies = json.load(json_file)
+            for cookie in cookies:
+                browser.add_cookie(cookie)
+            return True
+    except FileNotFoundError:
+        pass
+
     sleep(2)
-    # Termination condition
-    if post_count >= num_posts:
-        return
-    else:
-        posts = soup.find('section').find_all('article')
-        for post in posts:
-            # Get post content
-            paragraphs = post.find_all('p')
-            text = []
-            for paragraph in paragraphs:
-                text.append(paragraph.text.strip())
-            post_content = "".join(text)
+    browser.find_element(By.CSS_SELECTOR, '.br').click()  # Accept cookies
+    sleep(2)
+    # browser.find_element(By.CSS_SELECTOR, 'input[name="email"]').send_keys(username)
+    browser.find_element(By.CSS_SELECTOR, 'input[name="email"]').send_keys(args.username)
+    # browser.find_element(By.CSS_SELECTOR, 'input[name="pass"]').send_keys(password)
+    browser.find_element(By.CSS_SELECTOR, 'input[name="pass"]').send_keys(args.password)
+    browser.find_element(By.CSS_SELECTOR, 'input[name="login"]').click()
+    sleep(2)
+    browser.find_element(By.CSS_SELECTOR, 'input[type="submit"]').click()  # Accept prompt
+    sleep(2)
 
-            # Get post likes
-            footer_element = post.find('footer').find('a')
-            likes = footer_element.text
-            # If there's no likes this text should be just "Like"
-            if any(char.isdigit() for char in likes):
-                num_likes = likes.split(' ')[0]
-            else:
-                num_likes = 0
+    cookies = browser.get_cookies()
+    session = json.dumps(cookies, indent=4)
+    with open('session.json', 'w') as json_file:
+        json_file.write(session)
 
-            # Get number of comments
-            footer = post.find('footer').find_all('a')
-            comments = footer[3].text
-            # If there's no comments this text should be just "Comment"
-            if any(char.isdigit() for char in comments):
-                num_comments = comments.split(' ')[0]
-            else:
-                num_comments = 0
-
-            # Get comments for a post
-            comments_list = []
-            comment_link = 'https://mbasic.facebook.com/' + footer[3].get('href')
-            get_comments(browser, comment_link, comments_list, post)
-            posts_list.append({
-                'content': post_content,
-                'num_likes': num_likes,
-                'num_comments': num_comments,
-                'comments': comments_list
-            })
-            post_count = post_count + 1
-        if next_page_link != None:
-            next_url = 'https://mbasic.facebook.com/' + next_page_link
-            get_posts(next_url, num_posts, browser, posts_list, post_count)
-        return
-
-
+    return True
 def get_profile_info(profile_url: str, browser: WebDriver):
     browser.get(profile_url)
     source_data = browser.page_source
@@ -109,64 +186,3 @@ def get_profile_info(profile_url: str, browser: WebDriver):
 
     with open("profile_info.json", "w", encoding="utf-8") as json_file:
         json_file.write(json_info)
-
-
-def get_comments(browser, comments_url, comments_list, post) -> []:
-    try:
-        sleep(2)
-        browser.get(comments_url)
-        comment_page_soup = BeautifulSoup(browser.page_source, 'html.parser')
-        root_comments_in_the_current_page = comment_page_soup.find('div', id='m_story_permalink_view')
-        comments_in_the_current_page=root_comments_in_the_current_page.contents[1].contents[0].contents[4].contents
-        # last div contains the link to next comment page, /html/body/div/div/div[2]/div/div[1]/div[2]/div/div[5]
-        for index, comment in enumerate(comments_in_the_current_page):
-            if index != len(comments_in_the_current_page) - 1 and index != 0:
-                author = comment.find('h3').text
-                comment_body = comment.find('div').div.text
-                likes_img = comment.find('h3').find_next_siblings('div')[2].find('img')
-                if likes_img:
-                    likes_num = likes_img.findParent('a').text
-                else:
-                    likes_num = '0'
-                comments_list.append(
-                    {'author': author, 'body': comment_body, 'likes_num': likes_num}
-                )
-        # go to next comment page and continue scraping
-        if len(comments_in_the_current_page) > 0:
-            if 'View more comments…' in comments_in_the_current_page[-1].text:
-                next_comment_page = 'https://mbasic.facebook.com/' + comments_in_the_current_page[-1].find('a').get('href')
-                get_comments(browser, next_comment_page, comments_list, post)
-    except Exception as e:
-        print(e, post)
-    return
-
-
-def login(args, browser):
-    browser.get('https://mbasic.facebook.com/login')
-    try:  # Get the cookies from the last session
-        with open('session.json', 'r') as json_file:
-            cookies = json.load(json_file)
-            for cookie in cookies:
-                browser.add_cookie(cookie)
-            return True
-    except FileNotFoundError:
-        pass
-
-    sleep(2)
-    browser.find_element(By.CSS_SELECTOR, '.br').click()  # Accept cookies
-    sleep(2)
-    # browser.find_element(By.CSS_SELECTOR, 'input[name="email"]').send_keys(username)
-    browser.find_element(By.CSS_SELECTOR, 'input[name="email"]').send_keys(args.username)
-    # browser.find_element(By.CSS_SELECTOR, 'input[name="pass"]').send_keys(password)
-    browser.find_element(By.CSS_SELECTOR, 'input[name="pass"]').send_keys(args.password)
-    browser.find_element(By.CSS_SELECTOR, 'input[name="login"]').click()
-    sleep(2)
-    browser.find_element(By.CSS_SELECTOR, 'input[type="submit"]').click()  # Accept prompt
-    sleep(2)
-
-    cookies = browser.get_cookies()
-    session = json.dumps(cookies, indent=4)
-    with open('session.json', 'w') as json_file:
-        json_file.write(session)
-
-    return True

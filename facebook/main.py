@@ -1,14 +1,9 @@
 import json
 import argparse
-from time import sleep
 from selenium import webdriver
-from selenium.webdriver.chrome.webdriver import WebDriver
-from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.common.by import By
-from bs4 import BeautifulSoup
 import Post
-from facebook.scraping_functions import get_comments, get_profile_info, login, get_posts
+from facebook.scraping_functions import login, get_posts
 
 '''
 username = ''
@@ -46,6 +41,8 @@ def main():
         return
     print("Login successful")
 
+    path = '{}_crawl.json'.format(args.query)
+    json_file = open(path, 'w', encoding='utf-8')
     posts = []
     posts_to_find = args.num_posts
     # Dummy function
@@ -55,12 +52,10 @@ def main():
     '''get_profile_info(profile_url, browser)'''
 
     posts_url = 'https://mbasic.facebook.com/' + args.query + '?v=timeline'
-    get_posts(posts_url, posts_to_find, browser, posts)
-
+    get_posts(posts_url, posts_to_find, browser, posts, json_file)
+    print('Closing File...')
+    json_file.close()
     browser.quit()
-    path = 'facebook_crowl.json'
-    with open(path, 'w', encoding='utf-8') as file_json:
-        json.dump(posts, file_json, indent=4, ensure_ascii=False)
 
 
 # TODO:
