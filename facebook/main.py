@@ -52,6 +52,7 @@ def main():
     '''get_profile_info(profile_url, browser)'''
 
     posts_url = 'https://mbasic.facebook.com/' + args.query + '?v=timeline'
+    print(posts_url)
     get_posts(posts_url, posts_to_find, browser, posts, json_file)
     print('Closing File...')
     json_file.close()

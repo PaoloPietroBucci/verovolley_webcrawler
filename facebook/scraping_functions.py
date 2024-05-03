@@ -27,7 +27,7 @@ def get_posts(posts_url: str, num_posts: int, browser: WebDriver, posts_list: li
         for div in divs:
             if 'See more stories' in div.text:
                 next_page_link = div.find('a').get('href')
-        sleep(2)
+        sleep(4)
         # Termination condition
         if post_count >= num_posts:
             return
@@ -91,7 +91,7 @@ def get_posts(posts_url: str, num_posts: int, browser: WebDriver, posts_list: li
 
 def get_comments(browser, comments_url, comments_list, post_content) -> []:
     try:
-        sleep(4)
+        sleep(5)
         browser.get(comments_url)
         comment_page_soup = BeautifulSoup(browser.page_source, 'html.parser')
         root_comments_in_the_current_page = comment_page_soup.find('div', id='m_story_permalink_view')
