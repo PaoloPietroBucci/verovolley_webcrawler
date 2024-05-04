@@ -42,21 +42,25 @@ def main():
     print("Login successful")
 
     path = '{}_crawl.json'.format(args.query)
-    json_file = open(path, 'w', encoding='utf-8')
-    posts = []
-    posts_to_find = args.num_posts
-    # Dummy function
-    # full_url = 'https://mbasic.facebook.com/' + profile
+    try:
+        json_file = open(path, 'w', encoding='utf-8')
+        json_file.write('[')
+        posts = []
+        posts_to_find = args.num_posts
+        # Dummy function
+        # full_url = 'https://mbasic.facebook.com/' + profile
 
-    profile_url = 'https://mbasic.facebook.com/' + args.query
-    '''get_profile_info(profile_url, browser)'''
+        profile_url = 'https://mbasic.facebook.com/' + args.query
+        '''get_profile_info(profile_url, browser)'''
 
-    posts_url = 'https://mbasic.facebook.com/' + args.query + '?v=timeline'
-    print(posts_url)
-    get_posts(posts_url, posts_to_find, browser, posts, json_file)
-    print('Closing File...')
-    json_file.close()
-    browser.quit()
+        posts_url = 'https://mbasic.facebook.com/' + args.query + '?v=timeline'
+        print(posts_url)
+        get_posts(posts_url, posts_to_find, browser, posts, json_file)
+    finally:
+        print('Closing File...')
+        json_file.write(']')
+        json_file.close()
+        browser.quit()
 
 
 # TODO:

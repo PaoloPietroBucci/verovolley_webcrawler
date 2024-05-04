@@ -15,7 +15,7 @@ from facebook.Post import Post
 #  1. If present > save the content
 #  2. If not present > save None in the json
 
-def get_posts(posts_url: str, num_posts: int, browser: WebDriver, posts_list: list,json_file, post_count=0):
+def get_posts(posts_url: str, num_posts: int, browser: WebDriver, posts_list: list, json_file, post_count=0):
     # To be returned
     try:
         print('Scraped post:', post_count)
@@ -25,13 +25,13 @@ def get_posts(posts_url: str, num_posts: int, browser: WebDriver, posts_list: li
         next_page_link = None
         divs = soup.find('div', id="structured_composer_async_container").findChildren('div')
         for div in divs:
-            if 'See more stories' in div.text:
+            if 'See more stories' in div.text or 'Vedi altre storie' in div.text:
                 next_page_link = div.find('a').get('href')
         sleep(4)
         # Termination condition
         if post_count >= num_posts:
             return
-        #else: recursion
+        # else: recursion
         else:
             posts = soup.find('section').find_all('article')
             print('posts in this page: {}'.format(len(posts)))
@@ -43,32 +43,41 @@ def get_posts(posts_url: str, num_posts: int, browser: WebDriver, posts_list: li
                     text.append(paragraph.text.strip())
                 post_content = "".join(text)
 
-                #Get post date
-                post_date = post.find('abbr').text
+                try:
+                    # Get post date
+                    post_date = post.find('abbr').text
+                except AttributeError:
+                    post_date = 'Date Not Found'
 
                 # Get post likes
-                footer_element = post.find('footer').find('a')
-                likes = footer_element.text
-                # If there's no likes this text should be just "Like"
-                if any(char.isdigit() for char in likes):
-                    num_likes = likes.split(' ')[0]
-                else:
-                    num_likes = 0
+                try:
+                    footer_element = post.find('footer').find('a')
+                    likes = footer_element.text
+                    # If there's no likes this text should be just "Like"
+                    if any(char.isdigit() for char in likes):
+                        num_likes = likes.split(' ')[0]
+                    else:
+                        num_likes = 0
+                except AttributeError:
+                    num_likes = 'Num Likes Not Found'
 
                 # Get number of comments
-                footer = post.find('footer').find_all('a')
-                comments = footer[3].text
-                # If there's no comments this text should be just "Comment"
-                if any(char.isdigit() for char in comments):
-                    num_comments = comments.split(' ')[0]
-                else:
-                    num_comments = 0
+                try:
+                    footer = post.find('footer').find_all('a')
+                    comments = footer[3].text
+                    # If there's no comments this text should be just "Comment"
+                    if any(char.isdigit() for char in comments):
+                        num_comments = comments.split(' ')[0]
+                    else:
+                        num_comments = 0
+                except AttributeError:
+                    num_comments = 'Num Comments Not Found'
 
                 # Get comments for a post
                 comments_list = []
                 comment_link = 'https://mbasic.facebook.com/' + footer[3].get('href')
                 get_comments(browser, comment_link, comments_list, post_content)
-                new_post ={
+                new_post = {
                     'content': post_content,
                     'date': post_date,
                     'num_likes': num_likes,
@@ -79,10 +88,13 @@ def get_posts(posts_url: str, num_posts: int, browser: WebDriver, posts_list: li
                 print('Comments for this post: {}'.format(len(comments_list)))
                 posts_list.append(new_post)
                 json.dump(new_post, json_file, indent=4, ensure_ascii=False)
+                json_file.write(',')
+                json_file.write('\n')
                 post_count = post_count + 1
+
             if next_page_link != None:
                 next_url = 'https://mbasic.facebook.com/' + next_page_link
-                get_posts(next_url, num_posts, browser, posts_list, json_file,post_count)
+                get_posts(next_url, num_posts, browser, posts_list, json_file, post_count)
     except Exception as e:
         print(e)
         traceback.print_exc()
@@ -95,7 +107,7 @@ def get_comments(browser, comments_url, comments_list, post_content) -> []:
         browser.get(comments_url)
         comment_page_soup = BeautifulSoup(browser.page_source, 'html.parser')
         root_comments_in_the_current_page = comment_page_soup.find('div', id='m_story_permalink_view')
-        comments_in_the_current_page=root_comments_in_the_current_page.contents[1].contents[0].contents[4].contents
+        comments_in_the_current_page = root_comments_in_the_current_page.contents[1].contents[0].contents[4].contents
         # last div contains the link to next comment page, /html/body/div/div/div[2]/div/div[1]/div[2]/div/div[5]
         for index, comment in enumerate(comments_in_the_current_page):
             if index != len(comments_in_the_current_page) - 1 and index != 0:
@@ -108,15 +120,17 @@ def get_comments(browser, comments_url, comments_list, post_content) -> []:
                 else:
                     likes_num = '0'
                 comments_list.append(
-                    {'author': author, 'body': comment_body, 'likes_num': likes_num, 'date':date}
+                    {'author': author, 'body': comment_body, 'likes_num': likes_num, 'date': date}
                 )
         # go to next comment page and continue scraping
         if len(comments_in_the_current_page) > 0:
-            if 'View more comments…' in comments_in_the_current_page[-1].text:
-                next_comment_page = 'https://mbasic.facebook.com/' + comments_in_the_current_page[-1].find('a').get('href')
+            if 'View more comments…' in comments_in_the_current_page[-1].text or 'Visualizza altri commenti…' in \
+                    comments_in_the_current_page[-1].text:
+                next_comment_page = 'https://mbasic.facebook.com/' + comments_in_the_current_page[-1].find('a').get(
+                    'href')
                 get_comments(browser, next_comment_page, comments_list, post_content)
     except Exception as e:
-        print(e,' error in post: ' , post_content)
+        print(e, ' error in post: ', post_content)
     return
 
 
@@ -149,6 +163,8 @@ def login(args, browser):
         json_file.write(session)
 
     return True
+
+
 def get_profile_info(profile_url: str, browser: WebDriver):
     browser.get(profile_url)
     source_data = browser.page_source
