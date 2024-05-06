@@ -27,7 +27,7 @@ def get_posts(posts_url: str, num_posts: int, browser: WebDriver, posts_list: li
         for div in divs:
             if 'See more stories' in div.text or 'Vedi altre storie' in div.text:
                 next_page_link = div.find('a').get('href')
-        sleep(4)
+        #sleep(4)
         # Termination condition
         if post_count >= num_posts:
             return
@@ -75,13 +75,18 @@ def get_posts(posts_url: str, num_posts: int, browser: WebDriver, posts_list: li
 
                 # Get comments for a post
                 comments_list = []
-                comment_link = 'https://mbasic.facebook.com/' + footer[3].get('href')
+                comment_link = ''
+                for element in footer:
+                    print (element.text.lower())
+                    if 'com' in element.text.lower():
+                        comment_link = 'https://mbasic.facebook.com'+element.get('href')
                 get_comments(browser, comment_link, comments_list, post_content)
                 new_post = {
                     'content': post_content,
                     'date': post_date,
                     'num_likes': num_likes,
                     'num_comments': num_comments,
+                    'post_url': comment_link,
                     'comments': comments_list
                 }
                 print(post_content)
@@ -103,11 +108,12 @@ def get_posts(posts_url: str, num_posts: int, browser: WebDriver, posts_list: li
 
 def get_comments(browser, comments_url, comments_list, post_content) -> []:
     try:
-        sleep(5)
+        #sleep(5)
         browser.get(comments_url)
         comment_page_soup = BeautifulSoup(browser.page_source, 'html.parser')
         root_comments_in_the_current_page = comment_page_soup.find('div', id='m_story_permalink_view')
         comments_in_the_current_page = root_comments_in_the_current_page.contents[1].contents[0].contents[4].contents
+
         # last div contains the link to next comment page, /html/body/div/div/div[2]/div/div[1]/div[2]/div/div[5]
         for index, comment in enumerate(comments_in_the_current_page):
             if index != len(comments_in_the_current_page) - 1 and index != 0:
