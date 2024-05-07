@@ -3,7 +3,7 @@ import argparse
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 import Post
-from facebook.scraping_functions import login, get_posts
+from scraping_functions import login, get_posts
 
 '''
 username = ''
@@ -43,8 +43,13 @@ def main():
 
     path = '{}_crawl.json'.format(args.query)
     try:
-        json_file = open(path, 'w', encoding='utf-8')
-        json_file.write('[')
+        json_file, data = open_or_create_json(path)
+
+        if data:
+            posts_url = data[-1]['page_url']
+        else:
+            json_file.write('[')
+            posts_url = 'https://mbasic.facebook.com/' + args.query + '?v=timeline'
         posts = []
         posts_to_find = args.num_posts
         # Dummy function
@@ -53,7 +58,6 @@ def main():
         profile_url = 'https://mbasic.facebook.com/' + args.query
         '''get_profile_info(profile_url, browser)'''
 
-        posts_url = 'https://mbasic.facebook.com/' + args.query + '?v=timeline'
         print(posts_url)
         get_posts(posts_url, posts_to_find, browser, posts, json_file)
     finally:
@@ -61,6 +65,20 @@ def main():
         json_file.write(']')
         json_file.close()
         browser.quit()
+
+def open_or_create_json(path):
+    try:
+        json_file = open(path, 'r+', encoding='utf-8')
+        data = json.load(json_file)
+        return json_file, data
+
+    except IOError:
+        print('File not found, will create a new one.')
+        # Create file
+        json_file = open(path, 'w', encoding='utf-8')
+        data = None
+        return json_file, data
+
 
 
 # TODO:

@@ -4,8 +4,9 @@ from selenium.webdriver.chrome.webdriver import WebDriver
 from selenium.webdriver.common.by import By
 from bs4 import BeautifulSoup
 import traceback
+import random
 
-from facebook.Post import Post
+from Post import Post
 
 
 # currently the get_profile_Info() is suited only on the content of 'verovolley'
@@ -77,16 +78,17 @@ def get_posts(posts_url: str, num_posts: int, browser: WebDriver, posts_list: li
                 comments_list = []
                 comment_link = ''
                 for element in footer:
-                    print (element.text.lower())
                     if 'com' in element.text.lower():
                         comment_link = 'https://mbasic.facebook.com'+element.get('href')
-                get_comments(browser, comment_link, comments_list, post_content)
+                if num_comments != 0:
+                    get_comments(browser, comment_link, comments_list, post_content)
                 new_post = {
                     'content': post_content,
                     'date': post_date,
                     'num_likes': num_likes,
                     'num_comments': num_comments,
                     'post_url': comment_link,
+                    "page_url": posts_url,
                     'comments': comments_list
                 }
                 print(post_content)
@@ -108,7 +110,7 @@ def get_posts(posts_url: str, num_posts: int, browser: WebDriver, posts_list: li
 
 def get_comments(browser, comments_url, comments_list, post_content) -> []:
     try:
-        #sleep(5)
+        #sleep(random.randint(30, 60))
         browser.get(comments_url)
         comment_page_soup = BeautifulSoup(browser.page_source, 'html.parser')
         root_comments_in_the_current_page = comment_page_soup.find('div', id='m_story_permalink_view')
